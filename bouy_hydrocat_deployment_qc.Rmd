@@ -4,7 +4,7 @@ output: html_document
 ---
 
 ---
-  title: "Hydrocat_Buoy_Test1"
+  title: "Hydrocat_Buoy_QC/Plotting"
 output: html_document
 ---
   
@@ -18,22 +18,28 @@ library('plyr')
 ```
 
 
-```{r Hydrocat_Buoy_Deployment1 data import}
-  hydrocat <- read.csv('D:/work/HydroCAT-EP-03730318-Data-20200909T171236_Test_Buoy_Deployment_1.csv', header=TRUE, sep=",")
+```{r Hydrocat_Buoy_Deployment data import}
+#Import Seabird Hydrocat-EP data file in csv format. Example file provided.    
+hydrocat <- read.csv('XX/YY/HydroCAT-EP-03730292-Data-20201111T153125.csv', header=TRUE, sep=",") 
 ```
 
-```{r Hydrocat_Buoy_Test1 Converting Date strings into Date objects using Lubridate}
+```{r Hydrocat_Buoy_Test Converting Date strings into Date objects using Lubridate}
+#Parse date and time from Hydrocat File
 hydrocat_dates <-hydrocat$DateTime..UTC.00.00.
 hydrocat_dates <- parse_date_time(hydrocat_dates, c("%m/%d/%y %H:%M"))
 ```
 
 ```{r NarraBay Range QC}
-nb_hist_data <- read.csv('D:/work/NB_PhysicalData_8.10.20201.csv', header=TRUE, sep=",", na.strings=c(""))
+#Pull in historical Narragansett Bay data for relevant parameters.
+
+nb_hist_data <- read.csv('XX/YY/NB_PhysicalData_8.10.20201.csv', header=TRUE, sep=",", na.strings=c("")) 
+#Data file of historical measurements from The Narragansett Bay Long-Term Plankton Time Series(https://web.uri.edu/gso/research/plankton/data/).
+
 psu_range <- range(nb_hist_data$Surface_Salinity,na.rm = TRUE)
 surface_temp_range <- range(nb_hist_data$Surface_Temp,na.rm = TRUE)
 salinity_nb_range <- range(nb_hist_data$Surface_Salinity,na.rm = TRUE)
 
-
+#Perform range check for applicable variables against NB historical measurement range, flag with QC Flags (1=low, 2=high, 0=good) 
 hydrocat <-mutate(hydrocat,
                         Salinity_NB_Range_QC =ifelse(hydrocat$Salinity..psu. > max(psu_range),
                                                              "2",ifelse( hydrocat$Salinity..psu. < min(psu_range),"1","0")))
@@ -43,6 +49,8 @@ hydrocat <-mutate(hydrocat,
 ```
 
 ```{r Global Data Range QC}
+
+#Perform range check for applicable variables against global historical measurement range, flag with QC Flags (1=low, 2=high, 0=good) 
 global_range_data <- read.csv('D:/work/data_qc_global_range_values.csv', header=TRUE, sep=",", na.strings=c(""))
 
 global_range_data_wide <-global_range_data %>% 
@@ -79,6 +87,8 @@ hydrocat <-mutate(hydrocat,
 ```
 
 ```{r despike_data}
+#Utilize "oce" despike command to perform median smoothing of each time series. Despike data is then written into a separate column. 
+
 hydrocat$Oxygen_despike <- despike(hydrocat$Oxygen..mg.L.,reference = c("median"),n = 4,k = 7,replace = c("NA"),skip)
 
 hydrocat$ph_despike <- despike(hydrocat$pH..pH.,reference = c("median"),n = 4,k = 7,replace = c("NA"),skip)
@@ -94,13 +104,15 @@ hydrocat$salinity_despike <- despike(hydrocat$Salinity..psu.,reference = c("medi
 ```
 
 ```{r}
-write.csv(hydrocat, file ="D:/work/hydrocat_deployment_1_v3_final_qc_despiked.csv")
+#Write csv file of despike, and QC'd HydroCat data
+write.csv(hydrocat, file ="XX/YY/hydrocat_deployment_XX_qc_despiked.csv")
 ```
 
 
 ```{r hydro_cat_timeseries}
+#Plot desired time series line plots in grid format.Lines are plotted for visual inspection, and colored by QC range flags. 
 
-pdf(file="D:/work/hydrocat_buoy_deployment1_plot_grid_presentation.pdf",width=9,height=12,useDingbats=FALSE)#open pdf graphical object to plot as pdf
+pdf(file="XX/YY/hydrocat_buoy_plot_grid.pdf",width=9,height=12,useDingbats=FALSE)#open pdf graphical object to plot as pdf
 
 hydro_ph<- ggplot(hydrocat,aes(x=hydrocat_dates,y=pH..pH., color=ph_Global_Range_QC)) +
     geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#009900", "#009900")) + ylab('pH') + xlab('Date')
