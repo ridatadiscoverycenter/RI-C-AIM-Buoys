@@ -4,7 +4,7 @@ output: html_document
 ---
 
 ---
-  title: "Hydrocat_Buoy_QC/Plotting"
+  title: "Total_Hydrocat_QC"
 output: html_document
 ---
   
@@ -15,41 +15,41 @@ library("oce")
 library('ggplot2')
 library('ggpubr')
 library('plyr')
+library('scales')
+library('readr')
 ```
 
 
 ```{r Hydrocat_Buoy_Deployment data import}
-#Import Seabird Hydrocat-EP data file in csv format. Example file provided.    
-hydrocat <- read.csv('XX/YY/HydroCAT-EP-03730292-Data-20201111T153125.csv', header=TRUE, sep=",") 
-```
+#Import Seabird Hydrocat-EP data file in csv format. Example file provided. 
+hydrocat <- list.files(path = "D:/work/hydrocat_deployment_data/",     # Identify all csv files in folder
+                       pattern = "*.csv", full.names = TRUE) %>% 
+  lapply(read_csv) %>%                                            # Store all files in list
+  bind_rows                                                       # Combine data sets into one data set 
+``` 
 
-```{r Hydrocat_Buoy_Test Converting Date strings into Date objects using Lubridate}
-#Parse date and time from Hydrocat File
-hydrocat_dates <-hydrocat$DateTime..UTC.00.00.
-hydrocat_dates <- parse_date_time(hydrocat_dates, c("%m/%d/%y %H:%M"))
+```{r Converting Date strings into Date objects using Lubridate}
+  hydrocat$`DateTime (UTC+00:00)` <- parse_date_time(hydrocat$`DateTime (UTC+00:00)`, c("%m/%d/%y %H:%M:%S"))
 ```
 
 ```{r NarraBay Range QC}
-#Pull in historical Narragansett Bay data for relevant parameters.
-
-nb_hist_data <- read.csv('XX/YY/NB_PhysicalData_8.10.20201.csv', header=TRUE, sep=",", na.strings=c("")) 
+#Perform range check for applicable variables against historical Narragansett Bay data measurement range, flag with QC Flags (1=low, 2=high, 0=good)
+nb_hist_data <- read.csv('D:/work/NB_PhysicalData_8.10.20201.csv', header=TRUE, sep=",", na.strings=c(""))
 #Data file of historical measurements from The Narragansett Bay Long-Term Plankton Time Series(https://web.uri.edu/gso/research/plankton/data/).
-
 psu_range <- range(nb_hist_data$Surface_Salinity,na.rm = TRUE)
 surface_temp_range <- range(nb_hist_data$Surface_Temp,na.rm = TRUE)
 salinity_nb_range <- range(nb_hist_data$Surface_Salinity,na.rm = TRUE)
 
-#Perform range check for applicable variables against NB historical measurement range, flag with QC Flags (1=low, 2=high, 0=good) 
+
 hydrocat <-mutate(hydrocat,
-                        Salinity_NB_Range_QC =ifelse(hydrocat$Salinity..psu. > max(psu_range),
-                                                             "2",ifelse( hydrocat$Salinity..psu. < min(psu_range),"1","0")))
+                        Salinity_NB_Range_QC =ifelse(hydrocat$`Salinity (psu)` > max(psu_range),
+                                                             "2",ifelse( hydrocat$`Salinity (psu)` < min(psu_range),"1","0")))
 hydrocat <-mutate(hydrocat,
-                       Temp_NB_Range_QC =ifelse(hydrocat$Temperature..Celsius. > max(surface_temp_range),
-                                                             "2",ifelse( hydrocat$Temperature..Celsius. < min(surface_temp_range),"1","0")))
+                       Temp_NB_Range_QC =ifelse(hydrocat$`Temperature (Celsius)` > max(surface_temp_range),
+                                                             "2",ifelse( hydrocat$`Temperature (Celsius)` < min(surface_temp_range),"1","0")))
 ```
 
 ```{r Global Data Range QC}
-
 #Perform range check for applicable variables against global historical measurement range, flag with QC Flags (1=low, 2=high, 0=good) 
 global_range_data <- read.csv('D:/work/data_qc_global_range_values.csv', header=TRUE, sep=",", na.strings=c(""))
 
@@ -69,64 +69,41 @@ global_oxy_min <- min(range(global_range_data_wide$GlobalRangeMin_dissolved_oxyg
 
 
 hydrocat <-mutate(hydrocat,
-                      Salinity_Global_Range_QC =ifelse(hydrocat$Salinity..psu. > global_psu_max,
-                                                             "2",ifelse( hydrocat$Salinity..psu < global_psu_min,"1","0")))
+                      Salinity_Global_Range_QC =ifelse(hydrocat$`Salinity (psu)` > global_psu_max,
+                                                             "2",ifelse( hydrocat$`Salinity (psu)` < global_psu_min,"1","0")))
 hydrocat <-mutate(hydrocat,
-                     Temp_Global_Range_QC =ifelse(hydrocat$Temperature..Celsius. > global_temp_max,
-                                                             "2",ifelse( hydrocat$Temperature..Celsius. < global_temp_min,"1","0")))
+                     Temp_Global_Range_QC =ifelse(hydrocat$`Temperature (Celsius)` > global_temp_max,
+                                                             "2",ifelse( hydrocat$`Temperature (Celsius)` < global_temp_min,"1","0")))
 hydrocat <-mutate(hydrocat,
-                     Chla_Global_Range_QC =ifelse(hydrocat$Chlorophyll..ug.l. > global_chla_max,
-                                                             "2",ifelse( hydrocat$Chlorophyll..ug.l. < global_chla_min,"1","0")))
+                     Chla_Global_Range_QC =ifelse(hydrocat$`Chlorophyll (ug/l)` > global_chla_max,
+                                                             "2",ifelse( hydrocat$`Chlorophyll (ug/l)` < global_chla_min,"1","0")))
 hydrocat <-mutate(hydrocat,
-                     ph_Global_Range_QC =ifelse(hydrocat$pH..pH. > global_ph_max,
-                                                             "2",ifelse( hydrocat$pH..pH. < global_ph_min,"1","0")))
+                     ph_Global_Range_QC =ifelse(hydrocat$`pH (pH)` > global_ph_max,
+                                                             "2",ifelse( hydrocat$`pH (pH)` < global_ph_min,"1","0")))
 hydrocat <-mutate(hydrocat,
-                     oxy_Global_Range_QC =ifelse(hydrocat$Oxygen..mg.L. > global_oxy_max,
-                                                             "2",ifelse( hydrocat$Oxygen..mg.L. < global_oxy_min,"1","0")))
+                     oxy_Global_Range_QC =ifelse(hydrocat$`Oxygen (mg/L)` > global_oxy_max,
+                                                             "2",ifelse( hydrocat$`Oxygen (mg/L)` < global_oxy_min,"1","0")))
 
-```
-
-```{r despike_data}
-#Utilize "oce" despike command to perform median smoothing of each time series. Despike data is then written into a separate column. 
-
-hydrocat$Oxygen_despike <- despike(hydrocat$Oxygen..mg.L.,reference = c("median"),n = 4,k = 7,replace = c("NA"),skip)
-
-hydrocat$ph_despike <- despike(hydrocat$pH..pH.,reference = c("median"),n = 4,k = 7,replace = c("NA"),skip)
-
-hydrocat$Temperature_despike <- despike(hydrocat$Temperature..Celsius.,reference = c("median"),n = 4,k = 7,replace = c("NA"),skip)
-
-hydrocat$Chlorophyll_despike <- despike(hydrocat$Chlorophyll..ug.l.,reference = c("median"),n = 4,k = 7,replace = c("NA"),skip)
-
-hydrocat$Spec_Conductivity_despike <- despike(hydrocat$Spec.Conductivity..uS.cm.,reference = c("median"),n = 4,k = 7,replace = c("NA"),skip)
-
-hydrocat$salinity_despike <- despike(hydrocat$Salinity..psu.,reference = c("median"),n = 4,k = 7,replace = c("NA"),skip)
-
-```
-
-```{r}
-#Write csv file of despike, and QC'd HydroCat data
-write.csv(hydrocat, file ="XX/YY/hydrocat_deployment_XX_qc_despiked.csv")
 ```
 
 
 ```{r hydro_cat_timeseries}
-#Plot desired time series line plots in grid format.Lines are plotted for visual inspection, and colored by QC range flags. 
 
-pdf(file="XX/YY/hydrocat_buoy_plot_grid.pdf",width=9,height=12,useDingbats=FALSE)#open pdf graphical object to plot as pdf
+pdf(file="D:/work/hydrocat_buoy_deployment_plot_grid_presentation.pdf",width=18,height=12,useDingbats=FALSE)#open pdf graphical object to plot as pdf
 
-hydro_ph<- ggplot(hydrocat,aes(x=hydrocat_dates,y=pH..pH., color=ph_Global_Range_QC)) +
+hydro_ph<- ggplot(hydrocat,aes(x=`DateTime (UTC+00:00)`,y=`pH (pH)`)) +
     geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#009900", "#009900")) + ylab('pH') + xlab('Date')
 
-hydro_chlor<- ggplot(hydrocat,aes(x=hydrocat_dates, y=Chlorophyll..ug.l., color=Chla_Global_Range_QC)) +
+hydro_chlor<- ggplot(hydrocat,aes(x=`DateTime (UTC+00:00)`, y=`Chlorophyll (ug/l)`, color=Chla_Global_Range_QC)) +
     geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#009900", "#009900")) + ylab('Chlorophyll a (ug/L)') + xlab('Date')
 
-hydro_o2<- ggplot(hydrocat,aes(x=hydrocat_dates, y=Oxygen..mg.L., color=oxy_Global_Range_QC)) +
+hydro_o2<- ggplot(hydrocat,aes(x=`DateTime (UTC+00:00)`, y=`Oxygen (mg/L)`, color=oxy_Global_Range_QC)) +
     geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#009900", "#009900")) + ylab('Surface Dissolved Oxygen (mg/L)')+ xlab('Date')
 
-hydro_salinity<- ggplot(hydrocat,aes(x=hydrocat_dates, y=Salinity..psu., color=Salinity_NB_Range_QC)) +
+hydro_salinity<- ggplot(hydrocat,aes(x=`DateTime (UTC+00:00)`, y=`Salinity (psu)`, color=Salinity_NB_Range_QC)) +
     geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('Surface Salinity (PSU)') + xlab('Date')
 
-hydro_temp<- ggplot(hydrocat,aes(x=hydrocat_dates, y=Temperature..Celsius., color=Temp_NB_Range_QC)) +
+hydro_temp<- ggplot(hydrocat,aes(x=`DateTime (UTC+00:00)`, y=`Temperature (Celsius)`, color=Temp_NB_Range_QC)) +
     geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('Surface Temperature (C)') + xlab('Date')
 
 qc_arrange <- ggarrange(hydro_ph,hydro_chlor,hydro_o2,hydro_salinity,hydro_temp,nrow = 5)
@@ -137,5 +114,83 @@ dev.off()#close pdf
 
 ```
 
+```{r reference_despike_data} 
+#Despike data using a median smoothing approach and write into a new column. 
 
+hydrocat_despike_reference <-hydrocat
+hydrocat_despike_reference$Oxygen_despike <- despike(hydrocat$`Oxygen (mg/L)`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
+
+hydrocat_despike_reference$ph_despike <- despike(hydrocat$`pH (pH)`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
+
+hydrocat_despike_reference$Temperature_despike <- despike(hydrocat$`Temperature (Celsius)`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
+
+hydrocat_despike_reference$Chlorophyll_despike <- despike(hydrocat$`Chlorophyll (ug/l)`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
+
+hydrocat_despike_reference$Spec_Conductivity_despike <- despike(hydrocat$`Spec Conductivity (uS/cm)`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
+
+hydrocat_despike_reference$salinity_despike <- despike(hydrocat$`Salinity (psu)`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
+
+```
+
+```{r NarraBay Range Despiked QC}
+#Run NB range QC check on despiked data.
+hydrocat_despike_reference<-mutate(hydrocat_despike_reference,
+                        Salinity_NB_Range_despike_reference_QC =ifelse(hydrocat_despike_reference$salinity_despike > max(psu_range),
+                                                             "2",ifelse( hydrocat_despike_reference$salinity_despike < min(psu_range),"1","0")))
+hydrocat_despike_reference <-mutate(hydrocat_despike_reference,
+                       Temp_NB_Range_despike_reference_QC =ifelse(hydrocat_despike_reference$Temperature_despike > max(surface_temp_range),"2",ifelse(hydrocat_despike_reference$Temperature_despike < min(surface_temp_range),"1","0")))
+```
+
+```{r Global Data Range Despiked QC}
+#Run global range QC check on despiked data.
+
+hydrocat_despike_reference <-mutate(hydrocat_despike_reference,
+                      Salinity_Global_Range_despike_reference_QC =ifelse(hydrocat_despike_reference$salinity_despike > global_psu_max,
+                                                             "2",ifelse( hydrocat_despike_reference$salinity_despike < global_psu_min,"1","0")))
+hydrocat_despike_reference <-mutate(hydrocat_despike_reference,
+                     Temp_Global_Range_despike_reference_QC =ifelse(hydrocat_despike_reference$Temperature_despike > global_temp_max,
+                                                             "2",ifelse( hydrocat_despike_reference$Temperature_despike < global_temp_min,"1","0")))
+hydrocat_despike_reference <-mutate(hydrocat_despike_reference,
+                     Chla_Global_Range_despike_reference_QC =ifelse(hydrocat_despike_reference$Chlorophyll_despike > global_chla_max,
+                                                             "2",ifelse( hydrocat_despike_reference$Chlorophyll_despike < global_chla_min,"1","0")))
+hydrocat_despike_reference <-mutate(hydrocat_despike_reference,
+                     ph_Global_Range_despike_reference_QC =ifelse(hydrocat_despike_reference$ph_despike > global_ph_max,
+                                                             "2",ifelse( hydrocat_despike_reference$ph_despike < global_ph_min,"1","0")))
+hydrocat_despike_reference <-mutate(hydrocat_despike_reference,
+                     oxy_Global_Range_despike_reference_QC =ifelse(hydrocat_despike_reference$Oxygen_despike > global_oxy_max,
+                                                             "2",ifelse( hydrocat_despike_reference$Oxygen_despike < global_oxy_min,"1","0")))
+
+```
+
+```{r}
+write.csv(hydrocat_despike_reference, file ="D:/work/hydrocat_deployment_complete_reference_qc_despiked.csv")
+```
+
+```{r hydrocat_reference_despike_timeseries}
+#Plot desired time series line plots in grid format.Lines are plotted for visual inspection, and colored by QC range flags. 
+
+pdf(file="D:/work/hydrocat_buoy_deployment5_plot_grid_presentation_despiked_reference.pdf",width=16,height=12,useDingbats=FALSE)#open pdf graphical object to plot as pdf
+
+hydro_ph_despike<- ggplot(hydrocat_despike_reference,aes(x=`DateTime (UTC+00:00)`,y=ph_despike, color=ph_Global_Range_despike_reference_QC)) + (scale_x_datetime(breaks = date_breaks("1 week"),labels = date_format("%m/%d"))) +
+    geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('pH') + xlab('Date') 
+
+hydro_chlor_despike<- ggplot(hydrocat_despike_reference,aes(x=`DateTime (UTC+00:00)`, y=Chlorophyll_despike, color=Chla_Global_Range_despike_reference_QC)) + (scale_x_datetime(breaks = date_breaks("1 week"),labels = date_format("%m/%d"))) +
+    geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('Chlorophyll a (ug/L)') + xlab('Date')
+
+hydro_o2_despike<- ggplot(hydrocat_despike_reference,aes(x=`DateTime (UTC+00:00)`, y=Oxygen_despike, color=oxy_Global_Range_despike_reference_QC)) + (scale_x_datetime(breaks = date_breaks("1 week"),labels = date_format("%m/%d"))) +
+    geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('Surface Dissolved Oxygen (mg/L)')+ xlab('Date')
+
+hydro_salinity_despike<- ggplot(hydrocat_despike_reference,aes(x=`DateTime (UTC+00:00)`, y=salinity_despike, color=Salinity_NB_Range_despike_reference_QC)) + (scale_x_datetime(breaks = date_breaks("1 week"),labels = date_format("%m/%d"))) +
+    geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('Surface Salinity (PSU)') + xlab('Date')
+
+hydro_temp_despike<- ggplot(hydrocat_despike_reference,aes(x=`DateTime (UTC+00:00)`, y=Temperature_despike, color=Temp_NB_Range_despike_reference_QC)) + (scale_x_datetime(breaks = date_breaks("1 week"),labels = date_format("%m/%d"))) +
+    geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('Surface Temperature (C)') + xlab('Date')
+
+qc_arrange <- ggarrange(hydro_ph_despike,hydro_chlor_despike,hydro_o2_despike,hydro_salinity_despike,hydro_temp_despike,nrow = 5)
+
+qc_arrange
+
+dev.off()#close pdf
+
+```
 
