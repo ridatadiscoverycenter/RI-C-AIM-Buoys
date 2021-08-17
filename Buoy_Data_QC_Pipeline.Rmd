@@ -4,7 +4,7 @@ output: html_document
 ---
 
 ---
-  title: "Total_Hydrocat_QC"
+  title: "Buoy_Data_QC_Pipeline"
 output: html_document
 ---
   
@@ -77,9 +77,6 @@ MetData_720_week$`TmStamp` <- parse_date_time(MetData_720_week$`TmStamp`, c("%y/
   
 PAR_720_week$`TmStamp` <- parse_date_time(PAR_720_week$`TmStamp`, c("%y/%m/%d %H:%M:%S"))
 
-#GPS_data$`TmStamp` <- parse_date_time(GPS_data$`TmStamp`, c("%y/%m/%d %H:%M:%S"))
-  
-#Castlehill_hydro_data$TmStamp <- parse_date_time(Castlehill_hydro_data$TmStamp, c("%y/%m/%d %H:%M:%S"))
 ```
 
 
@@ -104,7 +101,7 @@ Suna_720_week$Nitrate_despike <- despike(Suna_720_week$`sunaNitrateMicroMol`,ref
 
 
 
-
+```{r despiked_data_range_test}
 Hydrocat_720_week <-mutate(Hydrocat_720_week,
                       Salinity_Global_Range_QC =ifelse(Hydrocat_720_week$`salinity_despike` > global_psu_max,
                                                              "2",ifelse( Hydrocat_720_week$`salinity_despike` < global_psu_min,"1","0")))
@@ -129,7 +126,7 @@ Suna_720_week <- mutate(Suna_720_week,
                                                      
 ```
 
-```{r hydrocat_reference_despike_timeseries}
+```{r despike_QC_timeseries_plots}
 #Plot desired time series line plots in grid format.Lines are plotted for visual inspection, and colored by QC range flags. 
 
 pdf(file="D:/work/Api_test_Plots.pdf",width=16,height=12,useDingbats=FALSE)#open pdf graphical object to plot as pdf
