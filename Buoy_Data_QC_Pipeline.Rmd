@@ -21,29 +21,6 @@ library('httr')
 library('jsonlite')
 ```
 
-```{r Global Data Range QC}
-#Perform range check for applicable variables against global historical measurement range, flag with QC Flags (1=low, 2=high, 0=good) 
-global_range_data <- read.csv('D:/Work/data_qc_global_range_values.csv', header=TRUE, sep=",", na.strings=c(""))
-
-global_range_data_wide <-global_range_data %>% 
-  pivot_wider(names_from = ParameterID_R, values_from =c(GlobalRangeMax, GlobalRangeMin))
-
-global_psu_max <- max(range(global_range_data_wide$GlobalRangeMax_practical_salinity))
-global_psu_min <- min(range(global_range_data_wide$GlobalRangeMin_practical_salinity))
-global_temp_max <- max(range(global_range_data_wide$GlobalRangeMax_seawater_temperature))
-global_temp_min <- min(range(global_range_data_wide$GlobalRangeMin_seawater_temperature))
-global_chla_max <- min(range(global_range_data_wide$GlobalRangeMax_fluorometric_chlorophyll_a))
-global_chla_min <- min(range(global_range_data_wide$GlobalRangeMin_fluorometric_chlorophyll_a))
-global_ph_max <- min(range(global_range_data_wide$GlobalRangeMax_ph_seawater))
-global_ph_min <- min(range(global_range_data_wide$GlobalRangeMin_ph_seawater))
-global_oxy_max <- max(range(global_range_data_wide$GlobalRangeMax_dissolved_oxygen))
-global_oxy_min <- min(range(global_range_data_wide$GlobalRangeMin_dissolved_oxygen))
-global_fluoro_max <- max(range(global_range_data_wide$GlobalRangeMax_fluorometric_cdom))
-global_fluoro_min <- min(range(global_range_data_wide$GlobalRangeMin_fluorometric_cdom))
-global_nitrate_max <- max(range(global_range_data_wide$GlobalRangeMax_nitrate_concentration))
-global_nitrate_min <- min(range(global_range_data_wide$GlobalRangeMin_nitrate_concentration))
-
-```
 
 ```{r}
 #Pull the last week of data from the Brown API for Buoy-720
@@ -65,7 +42,7 @@ Hydrocycle_720_week = fromJSON(rawToChar(Hydrocycle_720_week$content))
 PAR_720_week = GET("https://api.riddc.brown.edu/telemetry/Buoy-720/PAR/lastweek")
 PAR_720_week = fromJSON(rawToChar(PAR_720_week$content))
 
-#Parse date/time 720 values using Lubridate 
+#Parse date/time values using Lubridate 
 
 Hydrocat_720_week$TmStamp <- parse_date_time(Hydrocat_720_week$TmStamp, c("%y/%m/%d %H:%M:%S"))
 
@@ -77,11 +54,14 @@ MetData_720_week$`TmStamp` <- parse_date_time(MetData_720_week$`TmStamp`, c("%y/
   
 PAR_720_week$`TmStamp` <- parse_date_time(PAR_720_week$`TmStamp`, c("%y/%m/%d %H:%M:%S"))
 
+month_range <- (range(month(PAR_720_week$`TmStamp`))) #create month range of collected data to be used for filtering Narragansett Bay historical data by season
+
 ```
 
 
+
 ```{r reference_despike_data} 
-#Despike data using a median smoothing approach and write into a new column. 
+#Despike data through median smoothing approach and write into a new column. 
 
 
 Hydrocat_720_week$Oxygen_despike <- despike(Hydrocat_720_week$`hydrocatDissOxygen`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
@@ -99,12 +79,32 @@ Suna_720_week$Nitrate_despike <- despike(Suna_720_week$`sunaNitrateMicroMol`,ref
 
 ```
 
+```{r Global Data Range}
+#Perform range check for applicable variables against global historical measurement range, flag with QC Flags (1=low, 2=high, 0=good) 
+global_range_data <- read.csv('D:/Work/data_qc_global_range_values.csv', header=TRUE, sep=",", na.strings=c(""))
 
+global_range_data_wide <-global_range_data %>% 
+  pivot_wider(names_from = ParameterID_R, values_from =c(GlobalRangeMax, GlobalRangeMin))
 
-```{r despiked_data_range_test}
+global_psu_max <- max(range(global_range_data_wide$GlobalRangeMax_practical_salinity))
+global_psu_min <- min(range(global_range_data_wide$GlobalRangeMin_practical_salinity))
+global_temp_max <- max(range(global_range_data_wide$GlobalRangeMax_seawater_temperature))
+global_temp_min <- min(range(global_range_data_wide$GlobalRangeMin_seawater_temperature))
+global_chla_max <- min(range(global_range_data_wide$GlobalRangeMax_fluorometric_chlorophyll_a))
+global_chla_min <- min(range(global_range_data_wide$GlobalRangeMin_fluorometric_chlorophyll_a))
+global_ph_max <- min(range(global_range_data_wide$GlobalRangeMax_ph_seawater))
+global_ph_min <- min(range(global_range_data_wide$GlobalRangeMin_ph_seawater))
+global_oxy_max <- max(range(global_range_data_wide$GlobalRangeMax_dissolved_oxygen))
+global_oxy_min <- min(range(global_range_data_wide$GlobalRangeMin_dissolved_oxygen))
+global_fluoro_max <- max(range(global_range_data_wide$GlobalRangeMax_fluorometric_cdom))
+global_fluoro_min <- min(range(global_range_data_wide$GlobalRangeMin_fluorometric_cdom))
+global_nitrate_max <- max(range(global_range_data_wide$GlobalRangeMax_nitrate_concentration))
+global_nitrate_min <- min(range(global_range_data_wide$GlobalRangeMin_nitrate_concentration))
+
+#Range check against global values
 Hydrocat_720_week <-mutate(Hydrocat_720_week,
                       Salinity_Global_Range_QC =ifelse(Hydrocat_720_week$`salinity_despike` > global_psu_max,
-                                                             "2",ifelse( Hydrocat_720_week$`salinity_despike` < global_psu_min,"1","0")))
+                                                             "2",ifelse( Hydrocat_720_week$`salinity_despike` < global_psu_min,"1","0"))) 
 Hydrocat_720_week <-mutate(Hydrocat_720_week,
                      Temp_Global_Range_QC =ifelse(Hydrocat_720_week$`Temperature_despike` > global_temp_max,
                                                              "2",ifelse( Hydrocat_720_week$`Temperature_despike` < global_temp_min,"1","0")))
@@ -122,8 +122,58 @@ ECO_720_week <- mutate(ECO_720_week,
 Suna_720_week <- mutate(Suna_720_week,
                     Nitrate_Global_Range_QC = ifelse(Suna_720_week$`Nitrate_despike` > global_nitrate_max,
                                                  "2", ifelse(Suna_720_week$`Nitrate_despike` < global_nitrate_min,"1","0")))
+#Hydrocyle_720-week <- mutate(Hydrocycle_720_week,
+#                    Nitrate_Global_Range_QC = ifelse(Suna_720_week$`Nitrate_despike` > global_nitrate_max,
+#                                                 "2", ifelse(Suna_720_week$`Nitrate_despike` < global_nitrate_min,"1","0")))
 
-                                                     
+
+```
+
+
+```{r Narragansett Bay Seasonal Range}
+nb_hist_phys_data <- read.csv('D:/work/NB_PhysicalData_8.10.20201.csv', header=TRUE, sep=",", na.strings=c("","nd")) #Read in historical physical data from GSO LTS measurements
+
+
+nb_hist_phys_data$Date <- parse_date_time(nb_hist_phys_data$Date, c("%d-%m-%y")) #Parse Date column into date objects
+
+nb_hist_phys_seasonal_filter <- nb_hist_phys_data %>% filter(month(nb_hist_phys_data$Date) >= min(month_range) & month(nb_hist_phys_data$Date) <= max(month_range))   #Filter historical data to seasonal time frame of buoy data
+
+seasonal_nb_psu_range <- range(nb_hist_phys_seasonal_filter$Surface_Salinity,na.rm = TRUE)
+
+seasonal_nb_surface_temp_range <- range(nb_hist_phys_seasonal_filter$Surface_Temp,na.rm = TRUE)
+
+
+
+
+nb_hist_nutr_data <- read.csv('D:/work/nutrientdata_01.18.2021.csv', header=TRUE, sep=",", na.strings=c("","nd")) #Read in historical nutrient data from GSO LTS measurements
+
+nb_hist_nutr_data$Date <- parse_date_time(nb_hist_nutr_data$Date, c("%m/%d/%y")) #Parse Date column into date objects
+
+nb_hist_nutr_seasonal_filter <- nb_hist_nutr_data %>% filter(month(nb_hist_nutr_data$Date) >= min(month_range) & month(nb_hist_nutr_data$Date) <= max(month_range))   #Filter historical data to seasonal time frame of buoy data
+
+seasonal_nb_nitrate_range <- range(nb_hist_nutr_seasonal_filter$NO3,na.rm = TRUE)
+
+seasonal_nb_DIP_range <- range(nb_hist_nutr_seasonal_filter$DIP,na.rm = TRUE)
+
+
+#Range check against seasonal Narragansett Bay global values
+Hydrocat_720_week <-mutate(Hydrocat_720_week,
+                      Salinity_Seasonal_NB_Range_QC =ifelse(Hydrocat_720_week$`salinity_despike` >  max(seasonal_nb_psu_range),
+                                                             "2",ifelse( Hydrocat_720_week$`salinity_despike` < min(seasonal_nb_psu_range),"1","0"))) 
+Hydrocat_720_week <-mutate(Hydrocat_720_week,
+                     Temp_Seasonal_NB_Range_QC =ifelse(Hydrocat_720_week$`Temperature_despike` > max(seasonal_nb_surface_temp_range),
+                                                             "2",ifelse( Hydrocat_720_week$`Temperature_despike` < min(seasonal_nb_surface_temp_range),"1","0")))
+
+Suna_720_week <- mutate(Suna_720_week,
+                    Nitrate_Global_Range_QC = ifelse(Suna_720_week$`Nitrate_despike` > max(seasonal_nb_nitrate_range),
+                                                 "2", ifelse(Suna_720_week$`Nitrate_despike` < min(seasonal_nb_nitrate_range),"1","0")))
+#Hydrocyle_720-week <- mutate(Hydrocycle_720_week,
+#                    Phosphate_Global_Range_QC = ifelse(Suna_720_week$`Nitrate_despike` > global_nitrate_max,
+#                                                 "2", ifelse(Suna_720_week$`Nitrate_despike` < global_nitrate_min,"1","0")))
+
+
+
+
 ```
 
 ```{r despike_QC_timeseries_plots}
