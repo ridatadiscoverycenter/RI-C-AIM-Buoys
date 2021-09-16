@@ -23,8 +23,12 @@ library('jsonlite')
 
 
 ```{r}
-date_range <-"2021-08-01,2021-09-02"
+end_date <-parse_date_time(Sys.Date(), c("%y-%m-%d"))#pulls current system date
+start_date <-end_date - days(7) #subtracts 7 days to get week range
 
+
+date_range <-sprintf("%s,%s", start_date, end_date)
+graph_date_range<-sprintf("%s_%s", start_date, end_date)
 
 #Pull the last week of data from the Brown API for Buoy-720
 Hydrocat_720 = GET(sprintf("https://tech.marecotec.com/ricaim/pumpstation/database/api.php/records/720_Hydrocat?filter=TmStamp,bt,%s",date_range))
@@ -324,9 +328,9 @@ Hydro_oxy_720 <- ggplot(Hydrocat_720,aes(x=`TmStamp`, y=Oxygen_despike, color=ox
   theme(axis.text=element_text(size=12),
         axis.title=element_text(size=14,face="bold"))
 ```{r despike_QC_timeseries_plots}
-#Plot desired time series line plots in grid format.Lines are plotted for visual inspection, and colored by QC range flags. 
-
-pdf(file="C:/Users/kgome/Documents/GitHub/RI-C-AIM-Buoys/Api_720_test_Plots_9_1_2021.pdf",width=16,height=12,useDingbats=FALSE)#open pdf graphical object to plot as pdf
+#Plot desired time series line plots in grid format.Lines are plotted for visual inspection, and colored by QC range flags.
+file_path_720 <- sprintf("D:/work/720_Weekly_Plots_%s.pdf",graph_date_range)
+pdf(file=file_path_720,width=16,height=12,useDingbats=FALSE)#open pdf graphical object to plot as pdf
 
 
 Wind_720_Plot <- ggplot(MetData_720,aes(x=`TmStamp`, y=avgWindSpeed)) + (scale_x_datetime(breaks = date_breaks("1 day"),
@@ -400,7 +404,10 @@ qc_arrange <- ggarrange(ECO_720_plot,Suna_720_plot,Precipitation_720_Plot,Pressu
 qc_arrange
 dev.off()#close pdf
 
-pdf(file="C:/Users/kgome/Documents/GitHub/RI-C-AIM-Buoys/Api_620_test_Plots_9_1_2021.pdf",width=16,height=12,useDingbats=FALSE)#open pdf graphical object to plot as pdf
+#Plot desired time series line plots in grid format.Lines are plotted for visual inspection, and colored by QC range flags.
+file_path_620 <- sprintf("D:/work/620_Weekly_Plots_%s.pdf",graph_date_range)
+pdf(file=file_path_620,width=16,height=12,useDingbats=FALSE)#open pdf graphical object to plot as pdf
+
 
 Hydro_Salinity_620 <- ggplot(Hydrocat_620,aes(x=`TmStamp`, y=salinity_despike, color=Salinity_Global_Range_QC)) + (scale_x_datetime(breaks = date_breaks("1 day"),
         labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('Salinity (psu)') +         xlab('Date')+  theme_bw() +
@@ -520,7 +527,7 @@ dev.off()#close pdf
 
 ```{r}
 
-pdf(file="D:/work/620_720_ECO_Plots_9_1_2021.pdf",width=16,height=12,useDingbats=FALSE)#open pdf graphical object to plot as pdf
+pdf(file="D:/work/620_720_ECO_Plots_9_14_2021.pdf",width=16,height=12,useDingbats=FALSE)#open pdf graphical object to plot as pdf
 ECO_620_raw_plot <- ggplot(ECO_620,aes(x=`TmStamp`,y=ecoReadingRaw)) + (scale_x_datetime(breaks = date_breaks("1 day"),
   labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('620 ECO Raw Counts ') + xlab('Date') +  theme_bw() +
   theme(panel.grid.major.x = element_blank(),
