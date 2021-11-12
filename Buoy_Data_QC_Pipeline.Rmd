@@ -21,9 +21,143 @@ library('httr')
 library('jsonlite')
 ```
 
-```{r Global Data Range QC}
+
+```{r}
+end_date <-parse_date_time(Sys.Date(), c("%y-%m-%d"))#pulls current system date
+start_date <-end_date - days(7) #subtracts 7 days to get week range
+
+
+date_range <-sprintf("%s,%s", start_date, end_date)
+graph_date_range<-sprintf("%s_%s", start_date, end_date)
+
+#Pull the last week of data from the Brown API for Buoy-720
+Hydrocat_720 = GET(sprintf("https://tech.marecotec.com/ricaim/pumpstation/database/api.php/records/720_Hydrocat?filter=TmStamp,bt,%s",date_range))
+Hydrocat_720 = fromJSON(rawToChar(Hydrocat_720$content))
+Hydrocat_720 <- Hydrocat_720$records
+
+Suna_720 = GET(sprintf("https://tech.marecotec.com/ricaim/pumpstation/database/api.php/records/720_SUNA?filter=TmStamp,bt,%s",date_range))
+Suna_720 = fromJSON(rawToChar(Suna_720$content))
+Suna_720 <- Suna_720$records
+
+ECO_720 = GET(sprintf("https://tech.marecotec.com/ricaim/pumpstation/database/api.php/records/720_ECO?filter=TmStamp,bt,%s",date_range))
+ECO_720 = fromJSON(rawToChar(ECO_720$content))
+ECO_720 <- ECO_720$records
+
+MetData_720 = GET(sprintf("https://tech.marecotec.com/ricaim/pumpstation/database/api.php/records/720_MetData?filter=TmStamp,bt,%s",date_range))
+MetData_720 = fromJSON(rawToChar(MetData_720$content))
+MetData_720 <- MetData_720$records
+
+Hydrocycle_720 = GET(sprintf("https://tech.marecotec.com/ricaim/pumpstation/database/api.php/records/720_Hydrocycle?filter=TmStamp,bt,%s",date_range))
+Hydrocycle_720 = fromJSON(rawToChar(Hydrocycle_720$content))
+Hydrocycle_720 <- Hydrocycle_720$records
+
+PAR_720 = GET(sprintf("https://tech.marecotec.com/ricaim/pumpstation/database/api.php/records/720_PAR?filter=TmStamp,bt,%s",date_range))
+PAR_720 = fromJSON(rawToChar(PAR_720$content))
+PAR_720 <- PAR_720$records
+
+#Parse date/time values using Lubridate 
+
+Hydrocat_720$`TmStamp` <- parse_date_time(Hydrocat_720$TmStamp, c("%y/%m/%d %H:%M:%S"))
+
+ECO_720$`TmStamp` <- parse_date_time(ECO_720$TmStamp, c("%y/%m/%d %H:%M:%S"))
+  
+Suna_720$`TmStamp` <- parse_date_time(Suna_720$`TmStamp`, c("%y/%m/%d %H:%M:%S"))
+  
+MetData_720$`TmStamp` <- parse_date_time(MetData_720$`TmStamp`, c("%y/%m/%d %H:%M:%S"))
+  
+PAR_720$`TmStamp` <- parse_date_time(PAR_720$`TmStamp`, c("%y/%m/%d %H:%M:%S"))
+
+Hydrocycle_720$`TmStamp` <- parse_date_time(Hydrocycle_720$`TmStamp`, c("%y/%m/%d %H:%M:%S"))
+
+month_range <- (range(month(PAR_720$`TmStamp`))) #create month range of collected data to be used for filtering Narragansett Bay historical data by season
+
+
+#Pull the last week of data from the Brown API for Buoy-620
+Hydrocat_620 = GET(sprintf("https://tech.marecotec.com/ricaim/pumpstation/database/api.php/records/620_Hydrocat?filter=TmStamp,bt,%s",date_range))
+Hydrocat_620 = fromJSON(rawToChar(Hydrocat_620$content))
+Hydrocat_620 <- Hydrocat_620$records
+
+Suna_620 = GET(sprintf("https://tech.marecotec.com/ricaim/pumpstation/database/api.php/records/620_SUNA?filter=TmStamp,bt,%s",date_range))
+Suna_620 = fromJSON(rawToChar(Suna_620$content))
+Suna_620 <- Suna_620$records
+
+ECO_620 = GET(sprintf("https://tech.marecotec.com/ricaim/pumpstation/database/api.php/records/620_ECO?filter=TmStamp,bt,%s",date_range))
+ECO_620 = fromJSON(rawToChar(ECO_620$content))
+ECO_620 <- ECO_620$records
+
+MetData_620 = GET(sprintf("https://tech.marecotec.com/ricaim/pumpstation/database/api.php/records/620_MetData?filter=TmStamp,bt,%s",date_range))
+MetData_620 = fromJSON(rawToChar(MetData_620$content))
+MetData_620 <- MetData_620$records
+
+Hydrocycle_620 = GET(sprintf("https://tech.marecotec.com/ricaim/pumpstation/database/api.php/records/620_Hydrocycle?filter=TmStamp,bt,%s",date_range))
+Hydrocycle_620 = fromJSON(rawToChar(Hydrocycle_620$content))
+Hydrocycle_620 <- Hydrocycle_620$records
+
+PAR_620 = GET(sprintf("https://tech.marecotec.com/ricaim/pumpstation/database/api.php/records/620_PAR?filter=TmStamp,bt,%s",date_range))
+PAR_620 = fromJSON(rawToChar(PAR_620$content))
+PAR_620 <- PAR_620$records
+
+#Parse date/time values using Lubridate 
+
+Hydrocat_620$`TmStamp` <- parse_date_time(Hydrocat_620$TmStamp, c("%y/%m/%d %H:%M:%S"))
+
+ECO_620$`TmStamp` <- parse_date_time(ECO_620$TmStamp, c("%y/%m/%d %H:%M:%S"))
+  
+Suna_620$`TmStamp` <- parse_date_time(Suna_620$`TmStamp`, c("%y/%m/%d %H:%M:%S"))
+  
+MetData_620$`TmStamp` <- parse_date_time(MetData_620$`TmStamp`, c("%y/%m/%d %H:%M:%S"))
+  
+PAR_620$`TmStamp` <- parse_date_time(PAR_620$`TmStamp`, c("%y/%m/%d %H:%M:%S"))
+
+Hydrocycle_620$`TmStamp` <- parse_date_time(Hydrocycle_620$`TmStamp`, c("%y/%m/%d %H:%M:%S"))
+
+month_range <- (range(month(PAR_620$`TmStamp`))) #create month range of collected data to be used for filtering Narragansett Bay historical data by season
+
+
+
+
+```
+
+
+```{r reference_despike_data} 
+#Despike data through median smoothing approach and write into a new column. 
+
+
+Hydrocat_720$Oxygen_despike <- despike(Hydrocat_720$`hydrocatDissOxygen`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
+
+Hydrocat_720$ph_despike <- despike(Hydrocat_720$`hydrocatPH`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
+
+Hydrocat_720$Temperature_despike <- despike(Hydrocat_720$`hydrocatTemperature`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
+
+Hydrocat_720$salinity_despike <- despike(Hydrocat_720$`hydrocatSalinity`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
+
+ECO_720$FDOM_despike<- despike(ECO_720$`ecoFDOM`,reference = c("median"), n=2, k=7, replace = c("reference"))
+
+Suna_720$Nitrate_despike <- despike(Suna_720$`sunaNitrateMicroMol`,reference = c("median"), n=2, k=7, replace = c("reference"))
+
+Hydrocycle_720$Phosphate_despike <- despike(Hydrocycle_720$'CAPO4',reference = c("median"), n=2, k=7, replace = c("reference"))
+
+
+
+Hydrocat_620$Oxygen_despike <- despike(Hydrocat_620$`hydrocatDissOxygen`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
+
+Hydrocat_620$ph_despike <- despike(Hydrocat_620$`hydrocatPH`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
+
+Hydrocat_620$Temperature_despike <- despike(Hydrocat_620$`hydrocatTemperature`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
+
+Hydrocat_620$salinity_despike <- despike(Hydrocat_620$`hydrocatSalinity`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
+
+ECO_620$FDOM_despike <- despike(ECO_620$`ecoFDOM`,reference = c("median"), n=2, k=7, replace = c("reference"))
+
+Suna_620$Nitrate_despike <- despike(Suna_620$`sunaNitrateMicroMol`,reference = c("median"), n=2, k=7, replace = c("reference"))
+
+Hydrocycle_620$Phosphate_despike <- despike(Hydrocycle_620$'CAPO4',reference = c("median"), n=2, k=7, replace = c("reference"))
+
+```
+
+```{r Global Data Range}
 #Perform range check for applicable variables against global historical measurement range, flag with QC Flags (1=low, 2=high, 0=good) 
-global_range_data <- read.csv('D:/Work/data_qc_global_range_values.csv', header=TRUE, sep=",", na.strings=c(""))
+global_range_data <- read.csv('D:/work/data_qc_global_range_values.csv', header=TRUE, sep=",", na.strings=c(""))
 
 global_range_data_wide <-global_range_data %>% 
   pivot_wider(names_from = ParameterID_R, values_from =c(GlobalRangeMax, GlobalRangeMin))
@@ -42,96 +176,124 @@ global_fluoro_max <- max(range(global_range_data_wide$GlobalRangeMax_fluorometri
 global_fluoro_min <- min(range(global_range_data_wide$GlobalRangeMin_fluorometric_cdom))
 global_nitrate_max <- max(range(global_range_data_wide$GlobalRangeMax_nitrate_concentration))
 global_nitrate_min <- min(range(global_range_data_wide$GlobalRangeMin_nitrate_concentration))
+global_phosphate_max <- max(range(global_range_data_wide$GlobalRangeMax_nitrate_concentration))
+global_phosphate_min <- min(range(global_range_data_wide$GlobalRangeMin_))
+
+#Range check against global values
+Hydrocat_720 <-mutate(Hydrocat_720,
+                      Salinity_Global_Range_QC =ifelse(Hydrocat_720$`salinity_despike` > global_psu_max,
+                                                             "2",ifelse( Hydrocat_720$`salinity_despike` < global_psu_min,"1","0"))) 
+Hydrocat_720 <-mutate(Hydrocat_720,
+                     Temp_Global_Range_QC =ifelse(Hydrocat_720$`Temperature_despike` > global_temp_max,
+                                                             "2",ifelse( Hydrocat_720$`Temperature_despike` < global_temp_min,"1","0")))
+Hydrocat_720 <-mutate(Hydrocat_720,
+                     ph_Global_Range_QC =ifelse(Hydrocat_720$`ph_despike` > global_ph_max,
+                                                             "2",ifelse( Hydrocat_720$`ph_despike` < global_ph_min,"1","0")))
+Hydrocat_720 <-mutate(Hydrocat_720,
+                     oxy_Global_Range_QC =ifelse(Hydrocat_720$`Oxygen_despike` > global_oxy_max,
+                                                             "2",ifelse( Hydrocat_720$`Oxygen_despike` < global_oxy_min,"1","0")))
+
+ECO_720 <- mutate(ECO_720,
+                   FDOM_Global_Range_QC = ifelse(ECO_720$`FDOM_despike` > global_fluoro_max,
+                                                 "2", ifelse(ECO_720$`FDOM_despike` < global_fluoro_min,"1","0")))
+
+Suna_720 <- mutate(Suna_720,
+                    Nitrate_Global_Range_QC = ifelse(Suna_720$`Nitrate_despike` > global_nitrate_max,
+                                                 "2", ifelse(Suna_720$`Nitrate_despike` < global_nitrate_min,"1","0")))
+#Hydrocyle_720-week <- mutate(Hydrocycle_720,
+#                    Nitrate_Global_Range_QC = ifelse(Suna_720$`Nitrate_despike` > global_nitrate_max,
+#                                                 "2", ifelse(Suna_720$`Nitrate_despike` < global_nitrate_min,"1","0")))
+
+Hydrocat_620 <-mutate(Hydrocat_620,
+                      Salinity_Global_Range_QC =ifelse(Hydrocat_620$`salinity_despike` > global_psu_max,
+                                                             "2",ifelse( Hydrocat_620$`salinity_despike` < global_psu_min,"1","0"))) 
+Hydrocat_620 <-mutate(Hydrocat_620,
+                     Temp_Global_Range_QC =ifelse(Hydrocat_620$`Temperature_despike` > global_temp_max,
+                                                             "2",ifelse( Hydrocat_620$`Temperature_despike` < global_temp_min,"1","0")))
+Hydrocat_620 <-mutate(Hydrocat_620,
+                     ph_Global_Range_QC =ifelse(Hydrocat_620$`ph_despike` > global_ph_max,
+                                                             "2",ifelse( Hydrocat_620$`ph_despike` < global_ph_min,"1","0")))
+Hydrocat_620 <-mutate(Hydrocat_620,
+                     oxy_Global_Range_QC =ifelse(Hydrocat_620$`Oxygen_despike` > global_oxy_max,
+                                                             "2",ifelse( Hydrocat_620$`Oxygen_despike` < global_oxy_min,"1","0")))
+
+ECO_620 <- mutate(ECO_620,
+                   FDOM_Global_Range_QC = ifelse(ECO_620$`FDOM_despike` > global_fluoro_max,
+                                                 "2", ifelse(ECO_620$`FDOM_despike` < global_fluoro_min,"1","0")))
+
+Suna_620 <- mutate(Suna_620,
+                    Nitrate_Global_Range_QC = ifelse(Suna_620$`Nitrate_despike` > global_nitrate_max,
+                                                 "2", ifelse(Suna_620$`Nitrate_despike` < global_nitrate_min,"1","0")))
+
+
+
 
 ```
 
-```{r}
-#Pull the last week of data from the Brown API for Buoy-720
-Hydrocat_720_week = GET("https://api.riddc.brown.edu/telemetry/Buoy-720/Hydrocat/lastweek")
-Hydrocat_720_week = fromJSON(rawToChar(Hydrocat_720_week$content))
 
-Suna_720_week = GET("https://api.riddc.brown.edu/telemetry/Buoy-720/SUNA/lastweek")
-Suna_720_week = fromJSON(rawToChar(Suna_720_week$content))
+```{r Narragansett Bay Seasonal Range}
+nb_hist_phys_data <- read.csv('D:/work/NB_PhysicalData_8.10.20201.csv', header=TRUE, sep=",", na.strings=c("","nd")) #Read in historical physical data from GSO LTS measurements
 
-ECO_720_week = GET("https://api.riddc.brown.edu/telemetry/Buoy-720/ECO/lastweek")
-ECO_720_week = fromJSON(rawToChar(ECO_720_week$content))
 
-MetData_720_week = GET("https://api.riddc.brown.edu/telemetry/Buoy-720/MetData/lastweek")
-MetData_720_week = fromJSON(rawToChar(MetData_720_week$content))
+nb_hist_phys_data$Date <- parse_date_time(nb_hist_phys_data$Date, c("%d-%m-%y")) #Parse Date column into date objects
 
-Hydrocycle_720_week = GET("https://api.riddc.brown.edu/telemetry/Buoy-720/Hydrocycle/lastweek")
-Hydrocycle_720_week = fromJSON(rawToChar(Hydrocycle_720_week$content))
+nb_hist_phys_seasonal_filter <- nb_hist_phys_data %>% filter(month(nb_hist_phys_data$Date) >= min(month_range) & month(nb_hist_phys_data$Date) <= max(month_range))   #Filter historical data to seasonal time frame of buoy data
 
-PAR_720_week = GET("https://api.riddc.brown.edu/telemetry/Buoy-720/PAR/lastweek")
-PAR_720_week = fromJSON(rawToChar(PAR_720_week$content))
+seasonal_nb_psu_range <- range(nb_hist_phys_seasonal_filter$Surface_Salinity,na.rm = TRUE)
 
-#Parse date/time 720 values using Lubridate 
+seasonal_nb_surface_temp_range <- range(nb_hist_phys_seasonal_filter$Surface_Temp,na.rm = TRUE)
 
-Hydrocat_720_week$TmStamp <- parse_date_time(Hydrocat_720_week$TmStamp, c("%y/%m/%d %H:%M:%S"))
 
-ECO_720_week$`TmStamp` <- parse_date_time(ECO_720_week$`TmStamp`, c("%y/%m/%d %H:%M:%S"))
-  
-Suna_720_week$`TmStamp` <- parse_date_time(Suna_720_week$`TmStamp`, c("%y/%m/%d %H:%M:%S"))
-  
-MetData_720_week$`TmStamp` <- parse_date_time(MetData_720_week$`TmStamp`, c("%y/%m/%d %H:%M:%S"))
-  
-PAR_720_week$`TmStamp` <- parse_date_time(PAR_720_week$`TmStamp`, c("%y/%m/%d %H:%M:%S"))
+
+
+nb_hist_nutr_data <- read.csv('D:/work/nutrientdata_01.18.2021.csv', header=TRUE, sep=",", na.strings=c("","nd")) #Read in historical nutrient data from GSO LTS measurements
+
+nb_hist_nutr_data$Date <- parse_date_time(nb_hist_nutr_data$Date, c("%m/%d/%y")) #Parse Date column into date objects
+
+nb_hist_nutr_seasonal_filter <- nb_hist_nutr_data %>% filter(month(nb_hist_nutr_data$Date) >= min(month_range) & month(nb_hist_nutr_data$Date) <= max(month_range))   #Filter historical data to seasonal time frame of buoy data
+
+seasonal_nb_nitrate_range <- range(nb_hist_nutr_seasonal_filter$NO3_uM,na.rm = TRUE)
+
+seasonal_nb_DIP_range <- range(nb_hist_nutr_seasonal_filter$DIP_uM,na.rm = TRUE)
+
+
+#Range check against seasonal Narragansett Bay global values
+Hydrocat_720 <-mutate(Hydrocat_720,
+                      Salinity_Seasonal_NB_Range_QC =ifelse(Hydrocat_720$`salinity_despike` >  max(seasonal_nb_psu_range),
+                                                             "2",ifelse( Hydrocat_720$`salinity_despike` < min(seasonal_nb_psu_range),"1","0"))) 
+Hydrocat_720 <-mutate(Hydrocat_720,
+                     Temp_Seasonal_NB_Range_QC =ifelse(Hydrocat_720$`Temperature_despike` > max(seasonal_nb_surface_temp_range),
+                                                             "2",ifelse( Hydrocat_720$`Temperature_despike` < min(seasonal_nb_surface_temp_range),"1","0")))
+
+Suna_720 <- mutate(Suna_720,
+                    Nitrate_Global_Range_QC = ifelse(Suna_720$`Nitrate_despike` > max(seasonal_nb_nitrate_range),
+                                                 "2", ifelse(Suna_720$`Nitrate_despike` < min(seasonal_nb_nitrate_range),"1","0")))
+Hydrocycle_720 <- mutate(Hydrocycle_720,
+                    Phosphate_Seasonal_NB_Range_QC = ifelse(Hydrocycle_720$Phosphate_despike > max(seasonal_nb_DIP_range),
+                                                 "2", ifelse(Hydrocycle_720$Phosphate_despike < min(seasonal_nb_DIP_range),"1","0")))
+
+
+
+
+Hydrocat_620 <-mutate(Hydrocat_620,
+                      Salinity_Seasonal_NB_Range_QC =ifelse(Hydrocat_620$`salinity_despike` >  max(seasonal_nb_psu_range),
+                                                             "2",ifelse( Hydrocat_620$`salinity_despike` < min(seasonal_nb_psu_range),"1","0"))) 
+Hydrocat_620 <-mutate(Hydrocat_620,
+                     Temp_Seasonal_NB_Range_QC =ifelse(Hydrocat_620$`Temperature_despike` > max(seasonal_nb_surface_temp_range),
+                                                             "2",ifelse( Hydrocat_620$`Temperature_despike` < min(seasonal_nb_surface_temp_range),"1","0")))
+
+Suna_620 <- mutate(Suna_620,
+                    Nitrate_Global_Range_QC = ifelse(Suna_620$`Nitrate_despike` > max(seasonal_nb_nitrate_range),
+                                                 "2", ifelse(Suna_620$`Nitrate_despike` < min(seasonal_nb_nitrate_range),"1","0")))
+Hydrocycle_620 <- mutate(Hydrocycle_620,
+                    Phosphate_Seasonal_NB_Range_QC = ifelse(Hydrocycle_620$Phosphate_despike > max(seasonal_nb_DIP_range),
+                                                 "2", ifelse(Hydrocycle_620$Phosphate_despike < min(seasonal_nb_DIP_range),"1","0")))
+
+
+
 
 ```
-
-
-```{r reference_despike_data} 
-#Despike data using a median smoothing approach and write into a new column. 
-
-
-Hydrocat_720_week$Oxygen_despike <- despike(Hydrocat_720_week$`hydrocatDissOxygen`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
-
-Hydrocat_720_week$ph_despike <- despike(Hydrocat_720_week$`hydrocatPH`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
-
-Hydrocat_720_week$Temperature_despike <- despike(Hydrocat_720_week$`hydrocatTemperature`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
-
-Hydrocat_720_week$salinity_despike <- despike(Hydrocat_720_week$`hydrocatSalinity`,reference = c("median"),n = 2,k = 7,replace = c("reference"))
-
-
-ECO_720_week$FDOM_despike <- despike(ECO_720_week$`ecoFDOM`,reference = c("median"), n=2, k=7, replace = c("reference"))
-
-Suna_720_week$Nitrate_despike <- despike(Suna_720_week$`sunaNitrateMicroMol`,reference = c("median"), n=2, k=7, replace = c("reference"))
-
-```
-
-
-
-```{r despiked_data_range_test}
-Hydrocat_720_week <-mutate(Hydrocat_720_week,
-                      Salinity_Global_Range_QC =ifelse(Hydrocat_720_week$`salinity_despike` > global_psu_max,
-                                                             "2",ifelse( Hydrocat_720_week$`salinity_despike` < global_psu_min,"1","0")))
-Hydrocat_720_week <-mutate(Hydrocat_720_week,
-                     Temp_Global_Range_QC =ifelse(Hydrocat_720_week$`Temperature_despike` > global_temp_max,
-                                                             "2",ifelse( Hydrocat_720_week$`Temperature_despike` < global_temp_min,"1","0")))
-Hydrocat_720_week <-mutate(Hydrocat_720_week,
-                     ph_Global_Range_QC =ifelse(Hydrocat_720_week$`ph_despike` > global_ph_max,
-                                                             "2",ifelse( Hydrocat_720_week$`ph_despike` < global_ph_min,"1","0")))
-Hydrocat_720_week <-mutate(Hydrocat_720_week,
-                     oxy_Global_Range_QC =ifelse(Hydrocat_720_week$`Oxygen_despike` > global_oxy_max,
-                                                             "2",ifelse( Hydrocat_720_week$`Oxygen_despike` < global_oxy_min,"1","0")))
-
-ECO_720_week <- mutate(ECO_720_week,
-                   FDOM_Global_Range_QC = ifelse(ECO_720_week$`FDOM_despike` > global_fluoro_max,
-                                                 "2", ifelse(ECO_720_week$`FDOM_despike` < global_fluoro_min,"1","0")))
-
-Suna_720_week <- mutate(Suna_720_week,
-                    Nitrate_Global_Range_QC = ifelse(Suna_720_week$`Nitrate_despike` > global_nitrate_max,
-                                                 "2", ifelse(Suna_720_week$`Nitrate_despike` < global_nitrate_min,"1","0")))
-
-                                                     
-```
-
-```{r despike_QC_timeseries_plots}
-#Plot desired time series line plots in grid format.Lines are plotted for visual inspection, and colored by QC range flags. 
-
-pdf(file="D:/work/Api_test_Plots.pdf",width=16,height=12,useDingbats=FALSE)#open pdf graphical object to plot as pdf
-
-Hydro_Salinity_720 <- ggplot(Hydrocat_720_week,aes(x=`TmStamp`, y=salinity_despike, color=Salinity_Global_Range_QC)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+Hydro_Salinity_720 <- ggplot(Hydrocat_720,aes(x=`TmStamp`, y=salinity_despike, color=Salinity_Global_Range_QC)) + (scale_x_datetime(breaks = date_breaks("1 day"),
         labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('Salinity (psu)') +         xlab('Date')+  theme_bw() +
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
@@ -140,7 +302,7 @@ Hydro_Salinity_720 <- ggplot(Hydrocat_720_week,aes(x=`TmStamp`, y=salinity_despi
         axis.title=element_text(size=14,face="bold"))
 
 
-Hydro_Temp_720 <- ggplot(Hydrocat_720_week,aes(x=`TmStamp`, y=Temperature_despike, color=Temp_Global_Range_QC )) + (scale_x_datetime(breaks = date_breaks("1 day"),
+Hydro_Temp_720 <- ggplot(Hydrocat_720,aes(x=`TmStamp`, y=Temperature_despike, color=Temp_Global_Range_QC )) + (scale_x_datetime(breaks = date_breaks("1 day"),
         labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('Temperature (Celcius)') +   xlab('Date')+  theme_bw() +
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
@@ -149,7 +311,7 @@ Hydro_Temp_720 <- ggplot(Hydrocat_720_week,aes(x=`TmStamp`, y=Temperature_despik
         axis.title=element_text(size=14,face="bold"))
 
 
-Hydro_pH_720 <- ggplot(Hydrocat_720_week,aes(x=`TmStamp`, y=ph_despike, color=ph_Global_Range_QC )) + (scale_x_datetime(breaks = date_breaks("1 day"),
+Hydro_pH_720 <- ggplot(Hydrocat_720,aes(x=`TmStamp`, y=ph_despike, color=ph_Global_Range_QC )) + (scale_x_datetime(breaks = date_breaks("1 day"),
         labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('pH') + xlab('Date')+       theme_bw() +
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
@@ -158,16 +320,20 @@ Hydro_pH_720 <- ggplot(Hydrocat_720_week,aes(x=`TmStamp`, y=ph_despike, color=ph
         axis.title=element_text(size=14,face="bold"))
 
 
-Hydro_oxy_720 <- ggplot(Hydrocat_720_week,aes(x=`TmStamp`, y=Oxygen_despike, color=oxy_Global_Range_QC )) + (scale_x_datetime(breaks = date_breaks("1 day"),
+Hydro_oxy_720 <- ggplot(Hydrocat_720,aes(x=`TmStamp`, y=Oxygen_despike, color=oxy_Global_Range_QC )) + (scale_x_datetime(breaks = date_breaks("1 day"),
         labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('Dissolved Oxygen (mg/L)')   + xlab('Date')+  theme_bw() +
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
         axis.text.x=element_text(angle=0)) +
   theme(axis.text=element_text(size=12),
         axis.title=element_text(size=14,face="bold"))
+```{r despike_QC_timeseries_plots}
+#Plot desired time series line plots in grid format.Lines are plotted for visual inspection, and colored by QC range flags.
+file_path_720 <- sprintf("D:/work/720_Weekly_Plots_%s.pdf",graph_date_range)
+pdf(file=file_path_720,width=16,height=12,useDingbats=FALSE)#open pdf graphical object to plot as pdf
 
 
-Wind_720_Plot <- ggplot(MetData_720_week,aes(x=`TmStamp`, y=avgWindSpeed)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+Wind_720_Plot <- ggplot(MetData_720,aes(x=`TmStamp`, y=avgWindSpeed)) + (scale_x_datetime(breaks = date_breaks("1 day"),
   labels = date_format("%m/%d")))  +  geom_line() + ylab('Average Wind Speed (m/s)') + xlab('Date')+  theme_bw() +
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
@@ -175,7 +341,7 @@ Wind_720_Plot <- ggplot(MetData_720_week,aes(x=`TmStamp`, y=avgWindSpeed)) + (sc
   theme(axis.text=element_text(size=12),
         axis.title=element_text(size=14,face="bold"))
 
-Temperature_720_Plot <- ggplot(MetData_720_week,aes(x=`TmStamp`, y=maximetTemperature)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+Temperature_720_Plot <- ggplot(MetData_720,aes(x=`TmStamp`, y=maximetTemperature)) + (scale_x_datetime(breaks = date_breaks("1 day"),
   labels = date_format("%m/%d")))  +  geom_line() + ylab('Temperature (Celcius)') + xlab('Date')+  theme_bw() +
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
@@ -183,7 +349,7 @@ Temperature_720_Plot <- ggplot(MetData_720_week,aes(x=`TmStamp`, y=maximetTemper
   theme(axis.text=element_text(size=12),
         axis.title=element_text(size=14,face="bold"))
 
-Humidity_720_Plot <- ggplot(MetData_720_week,aes(x=`TmStamp`, y=maximetHumidity)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+Humidity_720_Plot <- ggplot(MetData_720,aes(x=`TmStamp`, y=maximetHumidity)) + (scale_x_datetime(breaks = date_breaks("1 day"),
   labels = date_format("%m/%d")))  +  geom_line() + ylab('Humidity (%)') + xlab('Date')+  theme_bw() +
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
@@ -191,7 +357,7 @@ Humidity_720_Plot <- ggplot(MetData_720_week,aes(x=`TmStamp`, y=maximetHumidity)
   theme(axis.text=element_text(size=12),
         axis.title=element_text(size=14,face="bold"))
 
-Pressure_720_Plot <- ggplot(MetData_720_week,aes(x=`TmStamp`, y=maximetPressure)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+Pressure_720_Plot <- ggplot(MetData_720,aes(x=`TmStamp`, y=maximetPressure)) + (scale_x_datetime(breaks = date_breaks("1 day"),
   labels = date_format("%m/%d")))  +  geom_line() + ylab('Pressure (db)') + xlab('Date')+  theme_bw() +
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
@@ -199,7 +365,7 @@ Pressure_720_Plot <- ggplot(MetData_720_week,aes(x=`TmStamp`, y=maximetPressure)
   theme(axis.text=element_text(size=12),
         axis.title=element_text(size=14,face="bold"))
 
-Precipitation_720_Plot <- ggplot(MetData_720_week,aes(x=`TmStamp`, y=maximetPrecipitation)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+Precipitation_720_Plot <- ggplot(MetData_720,aes(x=`TmStamp`, y=maximetPrecipitation)) + (scale_x_datetime(breaks = date_breaks("1 day"),
   labels = date_format("%m/%d")))  +  geom_line() + ylab('Precipitation (mm/Hr)') + xlab('Date')+  theme_bw() +
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
@@ -208,7 +374,7 @@ Precipitation_720_Plot <- ggplot(MetData_720_week,aes(x=`TmStamp`, y=maximetPrec
         axis.title=element_text(size=14,face="bold"))
 
 
-Suna_720_plot <- ggplot(Suna_720_week,aes(x=`TmStamp`, y=Nitrate_despike, color=Nitrate_Global_Range_QC)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+Suna_720_plot <- ggplot(Suna_720,aes(x=`TmStamp`, y=Nitrate_despike, color=Nitrate_Global_Range_QC)) + (scale_x_datetime(breaks = date_breaks("1 day"),
   labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('Nitrate (umol)') + xlab('Date')+  theme_bw() +
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
@@ -216,7 +382,7 @@ Suna_720_plot <- ggplot(Suna_720_week,aes(x=`TmStamp`, y=Nitrate_despike, color=
   theme(axis.text=element_text(size=12),
         axis.title=element_text(size=14,face="bold"))
 
-ECO_720_plot <- ggplot(ECO_720_week,aes(x=`TmStamp`,y=FDOM_despike, color=FDOM_Global_Range_QC)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+ECO_720_plot <- ggplot(ECO_720,aes(x=`TmStamp`,y=ecoReadingRaw, color=FDOM_Global_Range_QC)) + (scale_x_datetime(breaks = date_breaks("1 day"),
   labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('FDOM (ppb)') + xlab('Date') +  theme_bw() +
   theme(panel.grid.major.x = element_blank(),
         panel.grid.minor.x = element_blank(),
@@ -224,10 +390,212 @@ ECO_720_plot <- ggplot(ECO_720_week,aes(x=`TmStamp`,y=FDOM_despike, color=FDOM_G
   theme(axis.text=element_text(size=12),
         axis.title=element_text(size=14,face="bold"))
 
-qc_arrange <- ggarrange(ECO_720_plot,Suna_720_plot,Precipitation_720_Plot,Pressure_720_Plot,Humidity_720_Plot,Temperature_720_Plot, Wind_720_Plot,Hydro_oxy_720,Hydro_pH_720,Hydro_Temp_720,Hydro_Salinity_720, nrow = 5)
+Hydrocycle_720_plot <- ggplot(Hydrocycle_720,aes(x=`TmStamp`,y=Phosphate_despike, color=Phosphate_Seasonal_NB_Range_QC)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+  labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('Phosphate (uM)') + xlab('Date') +  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=0)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+qc_arrange <- ggarrange(ECO_720_plot,Suna_720_plot,Precipitation_720_Plot,Pressure_720_Plot,Humidity_720_Plot,Temperature_720_Plot, Wind_720_Plot,Hydrocycle_720_plot, nrow = 5)
+#Hydro_oxy_720,Hydro_pH_720,Hydro_Temp_720,Hydro_Salinity_720,
 
 qc_arrange
 dev.off()#close pdf
 
+#Plot desired time series line plots in grid format.Lines are plotted for visual inspection, and colored by QC range flags.
+file_path_620 <- sprintf("D:/work/620_Weekly_Plots_%s.pdf",graph_date_range)
+pdf(file=file_path_620,width=16,height=12,useDingbats=FALSE)#open pdf graphical object to plot as pdf
+
+
+Hydro_Salinity_620 <- ggplot(Hydrocat_620,aes(x=`TmStamp`, y=salinity_despike, color=Salinity_Global_Range_QC)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+        labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('Salinity (psu)') +         xlab('Date')+  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=0)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+
+Hydro_Temp_620 <- ggplot(Hydrocat_620,aes(x=`TmStamp`, y=Temperature_despike, color=Temp_Global_Range_QC )) + (scale_x_datetime(breaks = date_breaks("1 day"),
+        labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('Temperature (Celcius)') +   xlab('Date')+  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=0)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+
+Hydro_pH_620 <- ggplot(Hydrocat_620,aes(x=`TmStamp`, y=ph_despike, color=ph_Global_Range_QC )) + (scale_x_datetime(breaks = date_breaks("1 day"),
+        labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('pH') + xlab('Date')+       theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=0)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+
+Hydro_oxy_620 <- ggplot(Hydrocat_620,aes(x=`TmStamp`, y=Oxygen_despike, color=oxy_Global_Range_QC )) + (scale_x_datetime(breaks = date_breaks("1 day"),
+        labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('Dissolved Oxygen (mg/L)')   + xlab('Date')+  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=0)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+
+Wind_620_Plot <- ggplot(MetData_620,aes(x=`TmStamp`, y=avgWindSpeed)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+  labels = date_format("%m/%d")))  +  geom_line() + ylab('Average Wind Speed (m/s)') + xlab('Date')+  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=0)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+Temperature_620_Plot <- ggplot(MetData_620,aes(x=`TmStamp`, y=maximetTemperature)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+  labels = date_format("%m/%d")))  +  geom_line() + ylab('Temperature (Celcius)') + xlab('Date')+  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=0)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+Humidity_620_Plot <- ggplot(MetData_620,aes(x=`TmStamp`, y=maximetHumidity)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+  labels = date_format("%m/%d")))  +  geom_line() + ylab('Humidity (%)') + xlab('Date')+  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=0)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+Pressure_620_Plot <- ggplot(MetData_620,aes(x=`TmStamp`, y=maximetPressure)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+  labels = date_format("%m/%d")))  +  geom_line() + ylab('Pressure (db)') + xlab('Date')+  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=0)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+Precipitation_620_Plot <- ggplot(MetData_620,aes(x=`TmStamp`, y=maximetPrecipitation)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+  labels = date_format("%m/%d")))  +  geom_line() + ylab('Precipitation (mm/Hr)') + xlab('Date')+  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=0)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+
+Suna_620_plot <- ggplot(Suna_620,aes(x=`TmStamp`, y=Nitrate_despike, color=Nitrate_Global_Range_QC)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+  labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('Nitrate (umol)') + xlab('Date')+  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=0)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+ECO_620_plot <- ggplot(ECO_620,aes(x=`TmStamp`,y=ecoReadingRaw, color=FDOM_Global_Range_QC)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+  labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('FDOM (ppb)') + xlab('Date') +  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=0)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+ECO_620_plot <- ggplot(ECO_620,aes(x=`TmStamp`,y=FDOM_despike, color=FDOM_Global_Range_QC)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+  labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('FDOM (ppb)') + xlab('Date') +  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=0)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+Hydrocycle_620_plot <- ggplot(Hydrocycle_620,aes(x=`TmStamp`,y=Phosphate_despike, color=Phosphate_Seasonal_NB_Range_QC)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+  labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('Phosphate (uM)') + xlab('Date') +  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=0)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+qc_arrange <- ggarrange(ECO_620_plot,Suna_620_plot,Precipitation_620_Plot,Pressure_620_Plot,Humidity_620_Plot,Temperature_620_Plot, Wind_620_Plot,Hydro_oxy_620,Hydro_pH_620,Hydro_Temp_620,Hydro_Salinity_620,Hydrocycle_620_plot, nrow = 5)
+
+qc_arrange
+dev.off()#close pdf
+
+```
+
+```{r}
+
+pdf(file="D:/work/620_720_ECO_Plots_9_14_2021.pdf",width=16,height=12,useDingbats=FALSE)#open pdf graphical object to plot as pdf
+ECO_620_raw_plot <- ggplot(ECO_620,aes(x=`TmStamp`,y=ecoReadingRaw)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+  labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('620 ECO Raw Counts ') + xlab('Date') +  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=45,vjust=0.5)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+ECO_620_fdom_plot <- ggplot(ECO_620,aes(x=`TmStamp`,y=FDOM_despike)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+  labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('620 ECO FDOM (ppb)') + xlab('Date') +  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=45,vjust=0.5)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+ECO_620_channel_plot <- ggplot(ECO_620,aes(x=`TmStamp`,y=ecoChannel)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+  labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('620 ECO Channel ') + xlab('Date') +  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=45,vjust=0.5)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+ECO_620_wavelength_plot <- ggplot(ECO_620,aes(x=`TmStamp`,y=ecoWavelength)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+  labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('620 ECO Wavelength') + xlab('Date') +  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=45,vjust=0.5)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+
+ECO_720_raw_plot <- ggplot(ECO_720,aes(x=`TmStamp`,y=ecoReadingRaw)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+  labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('720 ECO Raw Counts ') + xlab('Date') +  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=45,vjust=0.5)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+ECO_720_fdom_plot <- ggplot(ECO_720,aes(x=`TmStamp`,y=FDOM_despike)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+  labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('720 ECO FDOM (ppb)') + xlab('Date') +  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=45,vjust=0.5)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+ECO_720_channel_plot <- ggplot(ECO_720,aes(x=`TmStamp`,y=ecoChannel)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+  labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('720 ECO Channel ') + xlab('Date') +  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=45,vjust=0.5)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+ECO_720_wavelength_plot <- ggplot(ECO_720,aes(x=`TmStamp`,y=ecoWavelength)) + (scale_x_datetime(breaks = date_breaks("1 day"),
+  labels = date_format("%m/%d")))  +  geom_line() + scale_color_manual(breaks = c("0", "1", "2"),values=c("#009900", "#00CCCC", "#CC0000")) + ylab('720 ECO Wavelength') + xlab('Date') +  theme_bw() +
+  theme(panel.grid.major.x = element_blank(),
+        panel.grid.minor.x = element_blank(),
+        axis.text.x=element_text(angle=45,vjust=0.5)) +
+  theme(axis.text=element_text(size=12),
+        axis.title=element_text(size=14,face="bold"))
+
+
+qc_arrange <- ggarrange(ECO_720_raw_plot,ECO_720_fdom_plot,ECO_720_channel_plot, ECO_720_wavelength_plot,ECO_620_raw_plot,ECO_620_fdom_plot,ECO_620_channel_plot, ECO_620_wavelength_plot, nrow = 4)
+qc_arrange
+dev.off()#close pdf
 ```
 
