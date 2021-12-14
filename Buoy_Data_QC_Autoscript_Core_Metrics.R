@@ -10,7 +10,7 @@ library('readr')
 library('httr')
 library('jsonlite')
 library('gmailr')
-library("httpuv") 
+library("httpuv")
 library('sendmailR')
 
 #Create automatic weekly date range
@@ -415,12 +415,6 @@ for (value in Suna_720$FDOM_despike) {
 ECO_720$FDOM_Stuck_Value_QC <-FDOM_Stuck_Value_QC
 
 
-
-
-
-
-
-
 #pH_620
 i<-0
 pH_Stuck_Value_QC <- c()
@@ -583,9 +577,246 @@ for (value in Suna_620$FDOM_despike) {
 } 
 ECO_620$FDOM_Stuck_Value_QC <-FDOM_Stuck_Value_QC
 
+#Assess weekly  time series data for trends (drift) 
+#Test is working but need to figure out how best to include the trend test (create an associated metadata file of all variables of series level flags)
+ord=1
+nstd=3
+ord=round(abs(ord))
+nstd=abs(nstd)
+
+#Suna_620_Trend
+dat=na.omit(Suna_620$Nitrate_despike)
+dat_length=length(dat)
+x_dat <-seq(1,dat_length)
+pp=polyfit(x_dat,dat,ord)
+datpp=polyval(pp,x_dat)
+sd_diff=nstd*sd(dat-datpp)
+sd_dat=sd(dat)
+
+if (sd_diff < sd_dat) {nitrate_620_trend=1} else {nitrate_620_trend=0}
+
+#Salinity_620_Trend
+dat=na.omit(Hydrocat_620$salinity_despike)
+dat_length=length(dat)
+x_dat <-seq(1,dat_length)
+pp=polyfit(x_dat,dat,ord)
+datpp=polyval(pp,x_dat)
+sd_diff=nstd*sd(dat-datpp)
+sd_dat=sd(dat)
+
+if (sd_diff < sd_dat) {salinity_620_trend=1} else {salinity_620_trend=0}
+
+#pH_620_Trend
+dat=na.omit(Hydrocat_620$ph_despike)
+dat_length=length(dat)
+x_dat <-seq(1,dat_length)
+pp=polyfit(x_dat,dat,ord)
+datpp=polyval(pp,x_dat)
+sd_diff=nstd*sd(dat-datpp)
+sd_dat=sd(dat)
+
+if (sd_diff < sd_dat) {pH_620_trend=1} else {pH_620_trend=0}
+
+#Fluorescence_620_Trend
+dat=na.omit(Hydrocat_620$fluorescence_despike)
+dat_length=length(dat)
+x_dat <-seq(1,dat_length)
+pp=polyfit(x_dat,dat,ord)
+datpp=polyval(pp,x_dat)
+sd_diff=nstd*sd(dat-datpp)
+sd_dat=sd(dat)
+
+if (sd_diff < sd_dat) {fluorescence_620_trend=1} else {fluorescence_620_trend=0}
+
+#Oxygen_620_Trend
+dat=na.omit(Hydrocat_620$Oxygen_despike)
+dat_length=length(dat)
+x_dat <-seq(1,dat_length)
+pp=polyfit(x_dat,dat,ord)
+datpp=polyval(pp,x_dat)
+sd_diff=nstd*sd(dat-datpp)
+sd_dat=sd(dat)
+
+if (sd_diff < sd_dat) {oxygen_620_trend=1} else {oxygen_620_trend=0}
 
 
-#Pull max and min measurements for instruments from each buoy
+#Turbidity_620_Trend
+dat=na.omit(Hydrocat_620$turbidity_despike)
+dat_length=length(dat)
+x_dat <-seq(1,dat_length)
+pp=polyfit(x_dat,dat,ord)
+datpp=polyval(pp,x_dat)
+sd_diff=nstd*sd(dat-datpp)
+sd_dat=sd(dat)
+
+if (sd_diff < sd_dat) {turbidity_620_trend=1} else {turbidity_620_trend=0}
+
+#Temperature_620_Trend
+dat=na.omit(Hydrocat_620$Temperature_despike)
+dat_length=length(dat)
+x_dat <-seq(1,dat_length)
+pp=polyfit(x_dat,dat,ord)
+datpp=polyval(pp,x_dat)
+sd_diff=nstd*sd(dat-datpp)
+sd_dat=sd(dat)
+
+if (sd_diff < sd_dat) {temperature_620_trend=1} else {temperature_620_trend=0}
+
+#Phosphate_620_Trend
+dat=na.omit(Hydrocycle_620$Phosphate_despike)
+dat_length=length(dat)
+x_dat <-seq(1,dat_length)
+pp=polyfit(x_dat,dat,ord)
+datpp=polyval(pp,x_dat)
+sd_diff=nstd*sd(dat-datpp)
+sd_dat=sd(dat)
+
+if (sd_diff < sd_dat) {phosphate_620_trend=1} else {phosphate_620_trend=0}
+
+
+#FDOM_620_Trend
+dat=na.omit(ECO_620$FDOM_despike)
+dat_length=length(dat)
+x_dat <-seq(1,dat_length)
+pp=polyfit(x_dat,dat,ord)
+datpp=polyval(pp,x_dat)
+sd_diff=nstd*sd(dat-datpp)
+sd_dat=sd(dat)
+
+if (sd_diff < sd_dat) {FDOM_620_trend=1} else {FDOM_620_trend=0}
+
+
+#Suna_720_Trend
+dat=na.omit(Suna_720$Nitrate_despike)
+dat_length=length(dat)
+x_dat <-seq(1,dat_length)
+pp=polyfit(x_dat,dat,ord)
+datpp=polyval(pp,x_dat)
+sd_diff=nstd*sd(dat-datpp)
+sd_dat=sd(dat)
+
+if (sd_diff < sd_dat) {nitrate_720_trend=1} else {nitrate_720_trend=0}
+
+#Salinity_720_Trend
+dat=na.omit(Hydrocat_720$salinity_despike)
+dat_length=length(dat)
+x_dat <-seq(1,dat_length)
+pp=polyfit(x_dat,dat,ord)
+datpp=polyval(pp,x_dat)
+sd_diff=nstd*sd(dat-datpp)
+sd_dat=sd(dat)
+
+if (sd_diff < sd_dat) {salinity_720_trend=1} else {salinity_720_trend=0}
+
+#pH_720_Trend
+dat=na.omit(Hydrocat_720$ph_despike)
+dat_length=length(dat)
+x_dat <-seq(1,dat_length)
+pp=polyfit(x_dat,dat,ord)
+datpp=polyval(pp,x_dat)
+sd_diff=nstd*sd(dat-datpp)
+sd_dat=sd(dat)
+
+if (sd_diff < sd_dat) {pH_720_trend=1} else {pH_720_trend=0}
+
+#Fluorescence_720_Trend
+dat=na.omit(Hydrocat_720$fluorescence_despike)
+dat_length=length(dat)
+x_dat <-seq(1,dat_length)
+pp=polyfit(x_dat,dat,ord)
+datpp=polyval(pp,x_dat)
+sd_diff=nstd*sd(dat-datpp)
+sd_dat=sd(dat)
+
+if (sd_diff < sd_dat) {fluorescence_720_trend=1} else {fluorescence_720_trend=0}
+
+#Oxygen_720_Trend
+dat=na.omit(Hydrocat_720$Oxygen_despike)
+dat_length=length(dat)
+x_dat <-seq(1,dat_length)
+pp=polyfit(x_dat,dat,ord)
+datpp=polyval(pp,x_dat)
+sd_diff=nstd*sd(dat-datpp)
+sd_dat=sd(dat)
+
+if (sd_diff < sd_dat) {oxygen_720_trend=1} else {oxygen_720_trend=0}
+
+
+#Turbidity_720_Trend
+dat=na.omit(Hydrocat_720$turbidity_despike)
+dat_length=length(dat)
+x_dat <-seq(1,dat_length)
+pp=polyfit(x_dat,dat,ord)
+datpp=polyval(pp,x_dat)
+sd_diff=nstd*sd(dat-datpp)
+sd_dat=sd(dat)
+
+if (sd_diff < sd_dat) {turbidity_720_trend=1} else {turbidity_720_trend=0}
+
+#Temperature_720_Trend
+dat=na.omit(Hydrocat_720$Temperature_despike)
+dat_length=length(dat)
+x_dat <-seq(1,dat_length)
+pp=polyfit(x_dat,dat,ord)
+datpp=polyval(pp,x_dat)
+sd_diff=nstd*sd(dat-datpp)
+sd_dat=sd(dat)
+
+if (sd_diff < sd_dat) {temperature_720_trend=1} else {temperature_720_trend=0}
+
+
+#Phosphate_720_Trend
+dat=na.omit(Hydrocycle_720$Phosphate_despike)
+dat_length=length(dat)
+x_dat <-seq(1,dat_length)
+pp=polyfit(x_dat,dat,ord)
+datpp=polyval(pp,x_dat)
+sd_diff=nstd*sd(dat-datpp)
+sd_dat=sd(dat)
+
+if (sd_diff < sd_dat) {phosphate_720_trend=1} else {phosphate_720_trend=0}
+
+
+#FDOM_720_Trend
+dat=na.omit(ECO_720$FDOM_despike)
+dat_length=length(dat)
+x_dat <-seq(1,dat_length)
+pp=polyfit(x_dat,dat,ord)
+datpp=polyval(pp,x_dat)
+sd_diff=nstd*sd(dat-datpp)
+sd_dat=sd(dat)
+
+if (sd_diff < sd_dat) {FDOM_720_trend=1} else {FDOM_720_trend=0}
+
+
+qc_trend_text <- sprintf ("Automated QC Trend report for CAIM Buoys 720 and 620
+
+                         Buoy 620 
+                         Salinity(PSU):%s
+                         Temperature(C):%s
+                         pH:%s
+                         Turbidity(NTU):%s
+                         Chlorophyll a(ug/L):%s
+                         Dissolved Oxygen(mg/L):%s
+                         Nitrate(uM):%s
+                         Phosphate(uM):%s
+                         FDOM(ppb):%s
+                         
+                         Buoy 720
+                         Salinity(PSU):%s
+                         Temperature(C):%s
+                         pH:%s
+                         Turbidity(NTU):%s
+                         Chlorophyll a(ug/L):%s
+                         Dissolved Oxygen(mg/L):%s
+                         Nitrate(uM):%s
+                         Phosphate(uM):%s
+                         FDOM(ppb):%s",
+                        salinity_620_trend,temperature_620_trend,pH_620_trend,turbidity_620_trend,fluorescence_620_trend,oxygen_620_trend,nitrate_620_trend,phosphate_620_trend,FDOM_620_trend,
+                        salinity_720_trend,temperature_720_trend,pH_720_trend,turbidity_720_trend,fluorescence_720_trend,oxygen_720_trend,nitrate_720_trend,phosphate_720_trend,FDOM_720_trend)
+
+
+
 #Pull max and min measurements for instruments from each buoy
 Solar_620_max <- max(System_620$SolarVoltage,na.rm = TRUE)
 Solar_620_min <- min(System_620$SolarVoltage,na.rm = TRUE)
