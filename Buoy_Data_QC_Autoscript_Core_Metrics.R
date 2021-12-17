@@ -12,6 +12,7 @@ library('jsonlite')
 library('gmailr')
 library("httpuv")
 library('sendmailR')
+library('RMariaDB')
 
 #Create automatic weekly date range
 end_date <-parse_date_time(Sys.Date(), c("%y-%m-%d"))#pulls current system date
@@ -352,6 +353,25 @@ for (value in Hydrocat_720$turbidity_despike) {
 } 
 Hydrocat_720$turbidity_Stuck_Value_QC <-turbidity_Stuck_Value_QC
 
+#Temperature_720
+i<-0
+Temperature_Stuck_Value_QC <- c()
+for (value in Hydrocat_720$Temperature_despike) {
+  i<-i+1 #Keeps track of index position
+  lead_2 <- c(Hydrocat_720$Temperature_despike[i+1],Hydrocat_720$Temperature_despike[i+2]) #takes current index position and finds next two values in the vector
+  lead_4 <- c(Hydrocat_720$Temperature_despike[i+1],Hydrocat_720$Temperature_despike[i+2],Hydrocat_720$Temperature_despike[i+3],Hydrocat_720$Temperature_despike[i+4]) #takes current index position and finds next four values in the vector
+  #compares the list of replicated values and checks if they are identical to the leading values, QC Flags ( 1 = 3 repeated values (potential stuck value), 2 = 5 repeated values (stuck value), 0= No stuck value detected)
+  if(identical(rep((Hydrocat_720$Temperature_despike[i]),times=4), lead_4)==TRUE){
+    Stuck_Value_QC = 2 
+  }else if(identical(rep((Hydrocat_720$Temperature_despike[i]),times=2), lead_2)==TRUE){
+    Stuck_Value_QC = 1
+  }else if((identical(rep((Hydrocat_720$Temperature_despike[i]), times=2), lead_2,)==FALSE)&(identical(rep((Hydrocat_720$Temperature_despike[i]),times=4), lead_4)==FALSE)){
+    Stuck_Value_QC = 0
+  }
+  Temperature_Stuck_Value_QC <- c(Temperature_Stuck_Value_QC, Stuck_Value_QC)
+  
+} 
+Hydrocat_720$Temperature_Stuck_Value_QC <-Temperature_Stuck_Value_QC
 
 #Phosphate_720
 i<-0
@@ -397,7 +417,7 @@ Suna_720$Nitrate_Stuck_Value_QC <-Nitrate_Stuck_Value_QC
 #FDOM_720
 i<-0
 FDOM_Stuck_Value_QC <- c()
-for (value in Suna_720$FDOM_despike) {
+for (value in ECO_720$FDOM_despike) {
   i<-i+1 #Keeps track of index position
   lead_2 <- c(ECO_720$FDOM_despike[i+1],ECO_720$FDOM_despike[i+2]) #takes current index position and finds next two values in the vector
   lead_4 <- c(ECO_720$FDOM_despike[i+1],ECO_720$FDOM_despike[i+2],ECO_720$FDOM_despike[i+3],ECO_720$FDOM_despike[i+4]) #takes current index position and finds next four values in the vector
@@ -516,6 +536,26 @@ for (value in Hydrocat_620$turbidity_despike) {
 Hydrocat_620$turbidity_Stuck_Value_QC <-turbidity_Stuck_Value_QC
 
 
+#Temperature_620
+i<-0
+Temperature_Stuck_Value_QC <- c()
+for (value in Hydrocat_620$Temperature_despike) {
+  i<-i+1 #Keeps track of index position
+  lead_2 <- c(Hydrocat_620$Temperature_despike[i+1],Hydrocat_620$Temperature_despike[i+2]) #takes current index position and finds next two values in the vector
+  lead_4 <- c(Hydrocat_620$Temperature_despike[i+1],Hydrocat_620$Temperature_despike[i+2],Hydrocat_620$Temperature_despike[i+3],Hydrocat_620$Temperature_despike[i+4]) #takes current index position and finds next four values in the vector
+  #compares the list of replicated values and checks if they are identical to the leading values, QC Flags ( 1 = 3 repeated values (potential stuck value), 2 = 5 repeated values (stuck value), 0= No stuck value detected)
+  if(identical(rep((Hydrocat_620$Temperature_despike[i]),times=4), lead_4)==TRUE){
+    Stuck_Value_QC = 2 
+  }else if(identical(rep((Hydrocat_620$Temperature_despike[i]),times=2), lead_2)==TRUE){
+    Stuck_Value_QC = 1
+  }else if((identical(rep((Hydrocat_620$Temperature_despike[i]), times=2), lead_2,)==FALSE)&(identical(rep((Hydrocat_620$Temperature_despike[i]),times=4), lead_4)==FALSE)){
+    Stuck_Value_QC = 0
+  }
+  Temperature_Stuck_Value_QC <- c(Temperature_Stuck_Value_QC, Stuck_Value_QC)
+  
+} 
+Hydrocat_620$Temperature_Stuck_Value_QC <-Temperature_Stuck_Value_QC
+
 #Phosphate_620
 i<-0
 Phosphate_Stuck_Value_QC <- c()
@@ -560,7 +600,7 @@ Suna_620$Nitrate_Stuck_Value_QC <-Nitrate_Stuck_Value_QC
 #FDOM_620
 i<-0
 FDOM_Stuck_Value_QC <- c()
-for (value in Suna_620$FDOM_despike) {
+for (value in ECO_620$FDOM_despike) {
   i<-i+1 #Keeps track of index position
   lead_2 <- c(ECO_620$FDOM_despike[i+1],ECO_620$FDOM_despike[i+2]) #takes current index position and finds next two values in the vector
   lead_4 <- c(ECO_620$FDOM_despike[i+1],ECO_620$FDOM_despike[i+2],ECO_620$FDOM_despike[i+3],ECO_620$FDOM_despike[i+4]) #takes current index position and finds next four values in the vector
@@ -788,33 +828,14 @@ sd_dat=sd(dat)
 
 if (sd_diff < sd_dat) {FDOM_720_trend=1} else {FDOM_720_trend=0}
 
+#Create data frame of trend Qc flags with date range 
+qc_trend_table <- data.frame(qc_date_range,salinity_620_trend,temperature_620_trend,pH_620_trend,turbidity_620_trend,fluorescence_620_trend,oxygen_620_trend,nitrate_620_trend,phosphate_620_trend,FDOM_620_trend,
+salinity_720_trend,temperature_720_trend,pH_720_trend,turbidity_720_trend,fluorescence_720_trend,oxygen_720_trend,nitrate_720_trend,phosphate_720_trend,FDOM_720_trend)
 
-qc_trend_text <- sprintf ("Automated QC Trend report for CAIM Buoys 720 and 620
-
-                         Buoy 620 
-                         Salinity(PSU):%s
-                         Temperature(C):%s
-                         pH:%s
-                         Turbidity(NTU):%s
-                         Chlorophyll a(ug/L):%s
-                         Dissolved Oxygen(mg/L):%s
-                         Nitrate(uM):%s
-                         Phosphate(uM):%s
-                         FDOM(ppb):%s
-                         
-                         Buoy 720
-                         Salinity(PSU):%s
-                         Temperature(C):%s
-                         pH:%s
-                         Turbidity(NTU):%s
-                         Chlorophyll a(ug/L):%s
-                         Dissolved Oxygen(mg/L):%s
-                         Nitrate(uM):%s
-                         Phosphate(uM):%s
-                         FDOM(ppb):%s",
-                        salinity_620_trend,temperature_620_trend,pH_620_trend,turbidity_620_trend,fluorescence_620_trend,oxygen_620_trend,nitrate_620_trend,phosphate_620_trend,FDOM_620_trend,
-                        salinity_720_trend,temperature_720_trend,pH_720_trend,turbidity_720_trend,fluorescence_720_trend,oxygen_720_trend,nitrate_720_trend,phosphate_720_trend,FDOM_720_trend)
-
+#Write out trend test results to txt file
+##Buoy_620_720_Trend_Table <- sprintf("C:/Users/kgomes1/Desktop/Buoy_QC_Reports/Data/Buoy_620_720_Trend_QC_%s.csv",qc_date_range)
+Buoy_620_720_Trend_Table <- sprintf("C:/Users/1600x/Documents/GitHub/RI-C-AIM-Buoys/Buoy_620_720_Trend_QC_%s.csv",qc_date_range)
+write.csv(qc_trend_table,Buoy_620_720_Trend_Table)
 
 
 #Pull max and min measurements for instruments from each buoy
@@ -864,10 +885,35 @@ Hydrocycle_720_phosphate_min <- min(Hydrocycle_720$Phosphate_despike,na.rm = TRU
 ECO_720_FDOM_max <- max(ECO_720$FDOM_despike,na.rm = TRUE)
 ECO_720_FDOM_min <- min(ECO_720$FDOM_despike,na.rm = TRUE)
 
+#Reorganize column layouts to put measurements and their qc flags together 
+
+Hydrocat_720 <-Hydrocat_720[,c(1,2,11,16,20,26,3,4,9,18,23,5,12,15,19,22,6,14,24,7,13,25,8,10,17,21)]
+
+Hydrocat_620 <-Hydrocat_620[,c(1,2,11,16,20,26,3,4,9,18,23,5,12,15,19,22,6,14,24,7,13,25,8,10,17,21)]
+
+
+#Insert QC Tables into MySQL
+#mysql_db <- dbConnect(MariaDB(), user = "root", password = "102011Gb!", dbname = "sys", host = "localhost")
+#dbWriteTable(mysql_db, "buoy-720_logger_hydrocat_QC",Hydrocat_720, append=TRUE)
+#dbWriteTable(mysql_db, "buoy-720_logger_suna_QC",Suna_720, append=TRUE)
+#dbWriteTable(mysql_db, "buoy-720_logger_eco_QC",ECO_720, append=TRUE)
+#dbWriteTable(mysql_db, "buoy-720_logger_hydrocycle_QC",Hydrocycle_720, append=TRUE)
+
+#dbWriteTable(mysql_db, "buoy-620_logger_hydrocat_QC",Hydrocat_620, append=TRUE)
+#dbWriteTable(mysql_db, "buoy-620_logger_suna_QC",Suna_620, append=TRUE)
+#dbWriteTable(mysql_db, "buoy-620_logger_eco_QC",ECO_620, append=TRUE)
+#dbWriteTable(mysql_db, "buoy-620_logger_hydrocycle_QC",Hydrocycle_620, append=TRUE)
+
+#dbWriteTable(mysql_db, "buoy-620_logger_hydrocycle_QC",qc_trend_table, append=TRUE)
+
+
+
+
 #Write data tables with despiked values and QC flags to CSVs
 ##Hydrocat_720_qc <- sprintf("C:/Users/kgomes1/Desktop/Buoy_QC_Reports/Data/Hydrocat_720_QC_%s.csv",qc_date_range)
 Hydrocat_720_qc <- sprintf("C:/Users/1600x/Documents/GitHub/RI-C-AIM-Buoys/Hydrocat_720_QC_%s.csv",qc_date_range)
 write.csv(Hydrocat_720,Hydrocat_720_qc)
+
 
 ##ECO_720_qc <- sprintf("C:/Users/kgomes1/Desktop/Buoy_QC_Reports/Data/ECO_720_QC_%s.csv",qc_date_range)
 ECO_720_qc <- sprintf("C:/Users/1600x/Documents/GitHub/RI-C-AIM-Buoys/ECO_720_QC_%s.csv",qc_date_range)
