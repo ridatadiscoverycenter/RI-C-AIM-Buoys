@@ -26,6 +26,7 @@ Public sunaVoltageBoard As Float       : Units sunaVoltageBoard = Volts
 Public sunaVoltageProc As Float        : Units sunaVoltageProc  = Volts
 Public sunaVoltageHV As Float          : Units sunaVoltageHV    = Volts
 
+Public sunaStart As String *16
 DataTable (SUNA, True, 1000)
   Sample(1,sunaSerial,String)
   Sample(1,sunaNitrateMicroMol,Float)
@@ -34,7 +35,8 @@ DataTable (SUNA, True, 1000)
   Sample(1,sunaInternalHumidity,Float)
 
   Sample(1,sunaTemperatureHousing,Float)
-
+  Sample(1, sunaStart, String)
+  
   'Sample(1,sunaTemperatureSpectro,Float)
   'Sample(1,sunaTemperatureLamp,Float)
 
@@ -73,7 +75,11 @@ Sub processSUNA()
   Dim i As long
   Dim val As Long
   
-  If sunaStage=0 AND requestSUNA=true AND Status.Timestamp(0,0)>sunaOffTime+sunaOffInterlock Then
+  If sunaStage=0 AND requestSUNA=true
+  sunaStart=Status.Timestamp(0,1)
+  sunaStage=1
+  EndIf
+  If sunaStage=1 AND requestSUNA=true AND Status.Timestamp(0,0)>sunaOffTime+sunaOffInterlock Then
     requestSUNA=false
     debugMessage = "Taking SUNA sensor reading" : Call Debug()
      If  Battery1Voltage > 12.5 Then
@@ -92,7 +98,7 @@ Sub processSUNA()
     sunaStartTime=Status.Timestamp(0,0)
     Call instPower(sunaInst, true)
     SerialOut(sunaPort, "$"+CRLF, "", 5, 1000)
-    sunaStage=1
+    sunaStage=2
     Else
       debugMessage = "Battery Voltage Low" : Call Debug()
       sunaSerial="NAN"
@@ -113,18 +119,18 @@ Sub processSUNA()
     sunaStage=11
   EndIf
   
-  If sunaStage=1 AND Status.Timestamp(0,0)>sunaStartTime+sunaStartupTime Then
+  If sunaStage=2 AND Status.Timestamp(0,0)>sunaStartTime+sunaStartupTime Then
     debugMessage = "Configuring SUNA sensor" : Call Debug()
     If SerialOut(sunaPort, "$"+CRLF, "SUNA>", 5, 1000)>0 Then
-      sunaStage=2
+      sunaStage=3
     EndIf
   EndIf
   
-  If sunaStage=2 Then
+  If sunaStage=3 Then
     debugMessage = "Querying SUNA device information" : Call Debug()
     cmd="SelfTest"
     SerialOutBlock(sunaPort, cmd+CHR(13)+CHR(10), Len(cmd)+2)
-    sunaStage=3
+    sunaStage=4
   EndIf
 
   If sunaStage=4 Then
@@ -160,6 +166,7 @@ Sub processSUNA()
     debugMessage = "SUNA powering off" : Call Debug()
     Call instPower(sunaInst, false)
     sunaOffTime=Status.Timestamp(0,0)
+    requestSUNA=false
     sunaStage=0
   EndIf
 
