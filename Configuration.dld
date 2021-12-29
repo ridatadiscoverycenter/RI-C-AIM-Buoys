@@ -1,0 +1,120 @@
+Const inst1Serial=false
+Const inst2Serial=true
+Const inst3Serial=true
+Const inst4Serial=true
+Const inst5Serial=true
+Const inst6Serial=true
+
+'****** INSTRUMENTS ******
+
+'*** Solar Regulator ***
+Const solInst=0 'Instrument 3 (U11/U12)
+Const solMode=1 'RS485 Half Duplex
+Const solPort=ComC1
+Const solBAUD=9600
+Const solBufferSize=32
+Const solUseIOBoard=False
+
+'*** Maximet ***
+Const maximetInst=3 'Instrument 3 (U5/U6)
+Const maximetMode=0 'RS232
+Const maximetPort=ComU5
+Const maximetBAUD=19200
+Const maximetHWBufferSize = 256
+Const enableMaximetGPS=true
+Const enableDriftAlarm=true
+Const dopThreshold=5
+Const debugMETinput = false
+Const debugMETdecode = false
+
+'*** Eco FL ***
+Const ecoInst=5
+Const ecoMode=0 'RS232
+Const ecoPort=ComU9
+Const ecoBAUD=19200
+Const ecoHWBufferSize=256
+Const nEcoChans=3
+
+'*** SUNA ***
+Const sunaInst=2
+Const sunaMode=0 'RS232
+Const sunaPort=ComU3
+Const sunaBAUD=57600
+Const sunaHWBufferSize=256
+Const sunaSWBufferSize=512
+
+'*** Hydrocat ***
+Const hydrocatInst=6 'Instrument 1 (U1/U2)
+Const hydrocatMode=0 'RS232
+Const hydrocatPort=ComU11
+Const hydrocatBAUD=19200
+Const hydrocatHWBufferSize = 512
+Const hydrocatSWBufferSize = 600
+Const hydrocatMessageSize=500
+
+'*** Hydrocycle ***
+Const hydrocycleInst=4
+Const hydrocycleMode=0
+Const hydrocyclePort=COMU7
+Const hydrocycleBAUD=19200
+Const hydrocycleSWbuffersize=256
+Const hydrocycleHWbuffersize=512
+
+'*** RAS Sampler ***
+Const RASport=COMRS232
+Const RASbaud=9600
+Const RASSWbuffersize=256
+Const RASHWbuffersize=512
+
+'****** POWER SYSTEM *********
+Const nPower = 16
+
+'****** COMMON *********
+Const Logger = CR6
+
+'****** Settings ******
+Const settingsKeyLength=30
+Const settingsValueLength=30
+Const settingsFile="CPU:Settings.txt"
+
+'****** Debugging ******
+Const debugLength=256
+Const debugEntries=128
+Const debugOverSerial=false
+Const debugPort=ComRS232
+Const debugSerialMode=0    ' Use mode 0 if outputting to RS232 port, or mode 16 if outputting via an instrument IO board.
+Const debugBAUD=115200
+Const debugNMEA = false
+Const debugNMEADecode = false
+Const debugGPSinput = false
+Const debugOverEthernet=true
+Const debugServerPort=8092
+Const debugServer="192.168.1.77"
+Const debugToFile=false
+Const debugFileName="CRD:debug.log"
+
+'****** GPS NEMA Parser ******
+Const NMEABufferSize = 1024
+Const NMEASentenceSize = 256
+Const NMEAParts = 25
+Const NMEAPartSize = 20
+Const gpsHWBufferSize = 128
+
+'****** GSM ******
+Const gsmHWBufferSize=128
+Const gsmPort=ComSDC8
+Const gsmInfoTable=true
+Const gsmStartDelay=15
+
+' XML Parser configuration
+Const XML_TOO_MANY_NAMESPACES = -3 ' Too many name space declarations encountered while parsing an element
+Const XML_NESTED_TOO_DEEP = -2 ' Too many nested XML elements
+Const XML_SYNTAX_ERROR_OR_FAILED = -1 ' XML syntax error or XMLParse failed
+Const XML_UNRECOGNIZED_ERROR_CONDITION = 0 'Unrecognized error condition
+Const XML_START_OF_ELEMENT = 1 'Start of XML element
+Const XML_ATTRIBUTE_READ = 2 ' XML attribute read.
+Const XML_END_OF_ELEMENT = 3 ' End of XML element
+Const XML_END_OF_DOCUMENT = 4 ' END of XML document encountered.  The document has been read/parsed successfully.
+
+Const XML_MAX_DEPTH = 10
+Const XML_MAX_NAMESPACES = 1 ' SOAP standard usually has two name spaces minimum.  The ones we are looking at only have one (the default namespace).

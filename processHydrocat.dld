@@ -1,0 +1,334 @@
+Dim hydrocatBuffer As String * hydrocatSWBufferSize
+
+Public hydrocatDevice As String * 32
+Public hydrocatSerial As String * 16
+'Public hydrocatMemSamples As Long
+'Public hydrocatMemSamplesFree As Long
+'Public hydrocatSupplyVoltage As Float
+'Public hydrocatBattVoltage As Float
+
+Public hydrocatTemperature As Float       : Units hydrocatTemperature = Deg C    ' : Alias hydrocatTemperature=SeaTemperature
+Public hydrocatConductivity As Float      : Units hydrocatConductivity = mS/cm
+Public hydrocatPressure As Float          : Units hydrocatPressure = dBar
+Public hydrocatDissOxygen As Float        : Units hydrocatDissOxygen = mg/L      ' : Alias hydrocatDissOxygen=DissolvedOxygen
+Public hydrocatSalinity As Float          : Units hydrocatSalinity = PSU
+Public hydrocatSoundVel As Float          : Units hydrocatSoundVel = m/s
+Public hydrocatSpecCond As Float          : Units hydrocatSpecCond = mS/cm
+Public hydrocatFluorescence As Float      : Units hydrocatFluorescence = ug/L    ' : Alias hydrocatFluorescence=Chlorophyll
+Public hydrocatTurbidity As Float         : Units hydrocatTurbidity = NTU        ' : Alias hydrocatTurbidity=Turbidity
+Public hydrocatPH As Float                                                       ' : Alias hydrocatPH=pH
+Public hydrocatOxygenSaturation As Float : Units hydrocatOxygenSaturation = %
+Public requestHydrocat As Boolean
+Dim hydrocatContinuous As Boolean
+
+Dim hydrocatPowerOn As Long
+Dim hydrocatPowerUpTime as Long
+Dim hydrocatSamplePeriod as Long
+Public hydrocatState As Long
+Dim hydrocatTimeout as Long
+
+Dim hydrocatLastQueryTime as Long
+
+DataTable (Hydrocat, True, 1000)
+  Sample(1,hydrocatSerial,String)
+  Sample(1,hydrocatTemperature,Float)
+  Sample(1,hydrocatConductivity,Float)
+  Sample(1,hydrocatPressure,Float)
+  Sample(1,hydrocatDissOxygen,Float)
+  Sample(1,hydrocatSalinity,Float)
+  Sample(1,hydrocatSoundVel,Float)
+  Sample(1,hydrocatSpecCond,Float)
+  Sample(1,hydrocatFluorescence,Float)
+  Sample(1,hydrocatTurbidity,Float)
+  Sample(1,hydrocatPH,Float)
+  Sample(1,hydrocatOxygenSaturation,Float)
+EndTable
+
+Sub hydrocatClearValues()
+  hydrocatTemperature=0
+  hydrocatConductivity=0
+  hydrocatPressure=0
+  hydrocatDissOxygen=0
+  hydrocatSalinity=0
+  hydrocatSoundVel=0
+  hydrocatSpecCond=0
+  hydrocatFluorescence=0
+  hydrocatTurbidity=0
+  hydrocatPH=0
+  hydrocatOxygenSaturation=0
+EndSub
+
+Sub initHydrocat()
+  hydrocatBuffer=""
+  hydrocatState=0
+  requestHydrocat=false
+  hydrocatPowerUpTime=0 'Allow some time (in seconds) for instrument to power up.
+  hydrocatTimeout=500    'Switch off if reading not taken after this many seconds.
+  hydrocatLastQueryTime=0
+  hydrocatContinuous=false
+  hydrocatClearValues()
+  
+  Call instConfig(hydrocatInst, hydrocatMode, false)
+  SerialOpen(hydrocatPort,hydrocatBAUD,16,0,hydrocatHWBufferSize)
+EndSub
+
+Sub hydrocatExtractMessage(softBuffer As String * hydrocatSWBufferSize, message As String * hydrocatMessageSize, ok As Boolean)
+  Dim startByte As Long
+  Dim endByte As Long
+  Dim header As String * 16 
+  Dim footer As String * 10 
+  ok=false
+  
+'  debugMessage="Pre Extract buffer: "+softBuffer : Call Debug()
+
+  startByte = InStr(1, softBuffer, "<", 2)
+  endByte = InStr(startByte, softBuffer, "<Executed/>", 2)
+  
+'  debugMessage="Start Byte: "+startByte : Call Debug()
+'  debugMessage="End Byte: "+endByte : Call Debug()
+
+  If endByte>0 Then 
+    message = Mid(softBuffer, startByte, endByte-startByte)
+'    debugMessage="Message("+Len(message)+" bytes)="+message : Call Debug()
+    softBuffer=Right(softBuffer,Len(softBuffer)-(endByte+10))
+'    debugMessage="Post Extract buffer: "+softBuffer : Call Debug()
+    ok=true
+  EndIf
+EndSub
+
+Sub hydrocatParse(message As String * hydrocatMessageSize)
+  Dim xml_response_code As Long
+  Dim xml_value As String * 30
+  Dim xml_attribute_name As String * 50
+  Dim xml_attribute_namespace As String * 50
+  Dim xml_element_name As String * 50
+  Dim xml_last_element_name As String * 50
+  Dim xml_element_namespace As String * 50
+  Dim xml_element_namestack As String * 1000
+  
+  Dim sensorNode As Long
+  Dim pointID As Long
+'  sbMessage=message
+'  debugMessage="Message Length="+Len(message) : Call Debug()
+'  debugMessage="Message="+message : Call Debug()
+
+  xml_response_code = XML_START_OF_ELEMENT
+  xml_element_namespace = "Initialize" 'has to be included to get XMLParse to do its thing 
+  xml_element_namestack=""
+
+  While xml_response_code > XML_UNRECOGNIZED_ERROR_CONDITION AND xml_response_code <> XML_END_OF_DOCUMENT
+    xml_response_code = XMLParse( message, xml_value, xml_attribute_name, xml_attribute_namespace, xml_element_name, xml_element_namespace, XML_MAX_DEPTH, XML_MAX_NAMESPACES)
+    xml_value=Trim(xml_value) ' Remove leading and trailing spaces
+    
+'    debugMessage="XML Response="+xml_response_code : Call Debug()
+'    debugMessage="XML Last Element Name="+xml_last_element_name : Call Debug()
+'    debugMessage="XML Value="+xml_value : Call Debug()
+'    debugMessage="XML Attribute="+xml_attribute_name : Call Debug()
+'    debugMessage="XML Attribute Namespace="+xml_attribute_namespace : Call Debug()
+'    debugMessage="XML Element="+xml_element_name : Call Debug()
+'    debugMessage="XML Element Namespace="+xml_element_namespace : Call Debug()
+'    debugMessage="XML Element Stack="+xml_element_namestack : Call Debug()
+
+    xml_last_element_name=xml_element_name
+
+' Status data
+    If xml_element_namestack = ":StatusData" AND xml_attribute_name = "DeviceType" Then hydrocatDevice = xml_value
+    If xml_element_namestack = ":StatusData" AND xml_attribute_name = "SerialNumber" Then hydrocatSerial = xml_value
+'    If xml_element_namestack = ":StatusData:Power:vMain" Then hydrocatSupplyVoltage = xml_value
+'    If xml_element_namestack = ":StatusData:Power:vLith" Then hydrocatBattVoltage = xml_value
+'    If xml_element_namestack = ":StatusData:MemorySummary:Samples" Then hydrocatMemSamples = xml_value
+'    If xml_element_namestack = ":StatusData:MemorySummary:SamplesFree" Then hydrocatMemSamplesFree = xml_value
+
+'Measurement Data
+    If xml_element_namestack = ":datapacket:hdr:model" Then hydrocatDevice = xml_value
+    If xml_element_namestack = ":datapacket:hdr:sn"    Then hydrocatSerial = xml_value
+    
+    If xml_element_namestack = ":datapacket:data:t1"    Then hydrocatTemperature = xml_value
+    If xml_element_namestack = ":datapacket:data:c1"    Then hydrocatConductivity = xml_value
+    If xml_element_namestack = ":datapacket:data:fl"    Then hydrocatFluorescence = xml_value
+    If xml_element_namestack = ":datapacket:data:ntu"   Then hydrocatTurbidity = xml_value
+    If xml_element_namestack = ":datapacket:data:p1"    Then hydrocatPressure = xml_value
+    If xml_element_namestack = ":datapacket:data:pH"    Then hydrocatPH = xml_value
+    If xml_element_namestack = ":datapacket:data:ox63r" Then hydrocatDissOxygen = xml_value
+    If xml_element_namestack = ":datapacket:data:oxSat" Then hydrocatOxygenSaturation = xml_value
+    If xml_element_namestack = ":datapacket:data:sal"   Then hydrocatSalinity = xml_value
+    If xml_element_namestack = ":datapacket:data:sv"    Then hydrocatSoundVel = xml_value
+    If xml_element_namestack = ":datapacket:data:sc"    Then hydrocatSpecCond = xml_value
+
+    If xml_response_code = XML_END_OF_ELEMENT Then xml_element_namestack=Left(xml_element_namestack, InStr(1, xml_element_namestack, ":", 10)-1)        
+    If xml_response_code = XML_START_OF_ELEMENT Then xml_element_namestack += ":"+xml_element_name 
+  Wend
+EndSub
+
+Sub processHydrocat()
+  Dim message As String * hydrocatMessageSize 
+  Dim ok As Boolean
+  
+  ok=true
+  
+  ' Ignore executing status message as it messes up parsing the output data
+  ' due to the required buffer size (not doing this requires a massive buffer)
+  
+  hydrocatBuffer = Replace ( hydrocatBuffer, "<Executing/>", "" )
+  hydrocatBuffer = Replace ( hydrocatBuffer, CHR(10), "" )
+  hydrocatBuffer = Replace ( hydrocatBuffer, CHR(13), "" )
+  
+  While (ok)
+    hydrocatExtractMessage(hydrocatBuffer, message, ok)
+    If ok=true Then
+      If Len(message)=0 Then
+        'Line feed command executed ok
+        If hydrocatState=2 Then hydrocatState=3
+      Else
+        hydrocatParse(message)
+        if hydrocatTemperature<>NaN Then  
+          hydrocatState=5
+        Else
+          debugMessage="Bad temperature reading, assuming this sample is rubbish, will retry." : Call Debug()
+          hydrocatState=2
+        EndIf
+      EndIf
+    EndIf
+  Wend
+EndSub
+
+Sub sampleHydrocat()
+  Dim hwBuffer As String * hydrocatHWBufferSize+1
+  Dim nBytes As Long
+  Dim rBytes As Long
+  Dim tBytes AS Long
+  Dim i As Long
+  Dim currentTime As Long
+  Dim thresholdTime As Long
+  Dim cmd as String * 20
+  currentTime=Status.Timestamp(0,0)
+  
+  If requestHydrocat=true Then
+    debugMessage="Hydrocat sample requested" : Call Debug()
+    If hydrocatState=0 AND Battery1Voltage > 12.5 Then
+      requestHydrocat=false
+      hydrocatState=1
+    Else
+      requestHydrocat=false
+        hydrocatTemperature="NAN"
+        hydrocatConductivity="NAN"
+        hydrocatPressure="NAN"
+        hydrocatDissOxygen="NAN"
+        hydrocatSalinity="NAN"
+        hydrocatSoundVel="NAN"
+        hydrocatSpecCond="NAN"
+        hydrocatFluorescence="NAN"
+        hydrocatTurbidity="NAN"
+        hydrocatPH="NAN"
+        hydrocatOxygenSaturation="NAN"
+      debugMessage="Hydrocat already taking a sample. Request ignored." : Call Debug()
+      hydrocatState=5
+    EndIf
+  EndIf
+  
+  If hydrocatState=1 Then
+    hydrocatPowerOn=Status.Timestamp(0,0)
+'    debugMessage="Power On Time = "+hydrocatPowerOn : Call Debug()
+
+    debugMessage="Powering Hydrocat" : Call Debug()
+    
+    Call instPower(hydrocatInst, true)
+    SerialOpen(hydrocatPort,hydrocatBAUD,16,0,hydrocatHWBufferSize)
+
+    hydrocatBuffer=""    
+    hydrocatClearValues()
+    hydrocatState=2
+  
+  EndIf
+  
+  thresholdTime=hydrocatPowerOn+hydrocatPowerUpTime
+  If Status.Timestamp(0,0)>thresholdTime AND hydrocatState=2 Then
+    hydrocatLastQueryTime=Status.Timestamp(0,0)
+
+    debugMessage="Waking up Hydrocat" : Call Debug()
+    nBytes=SerialOut(hydrocatPort, CHR(13)+CHR(10), "<Executed/>", 10, 200 )
+
+    If nBytes=11 Then
+      debugMessage="Hydrocat is awake - configuring" : Call Debug()
+      cmd = "OutputFormat=2"+CHR(13)+CHR(10) : SerialOut(hydrocatPort, cmd, cmd+"<Executed/>", 5, 100 )
+      cmd = "OutputTemp=Y"+CHR(13)+CHR(10)   : SerialOut(hydrocatPort, cmd, cmd+"<Executed/>", 5, 100 )
+      cmd = "OutputCond=Y"+CHR(13)+CHR(10)   : SerialOut(hydrocatPort, cmd, cmd+"<Executed/>", 5, 100 )
+      cmd = "OutputpH=Y"+CHR(13)+CHR(10)     : SerialOut(hydrocatPort, cmd, cmd+"<Executed/>", 5, 100 )
+      cmd = "OutputFl=Y"+CHR(13)+CHR(10)     : SerialOut(hydrocatPort, cmd, cmd+"<Executed/>", 5, 100 )   ' in ug/L
+      cmd = "OutputTbd=Y"+CHR(13)+CHR(10)    : SerialOut(hydrocatPort, cmd, cmd+"<Executed/>", 5, 100 )   ' in NTU
+      cmd = "OutputSal=Y"+CHR(13)+CHR(10)    : SerialOut(hydrocatPort, cmd, cmd+"<Executed/>", 5, 100 )   ' in psu
+      cmd = "OutputSC=Y"+CHR(13)+CHR(10)     : SerialOut(hydrocatPort, cmd, cmd+"<Executed/>", 5, 100 )
+      cmd = "OutputSV=N"+CHR(13)+CHR(10)     : SerialOut(hydrocatPort, cmd, cmd+"<Executed/>", 5, 100 )   ' in m/s
+      cmd = "OutputOxSat=Y"+CHR(13)+CHR(10)  : SerialOut(hydrocatPort, cmd, cmd+"<Executed/>", 5, 100 )   ' in %
+      
+      cmd = "SetTempUnits=0"+CHR(13)+CHR(10)  : SerialOut(hydrocatPort, cmd, cmd+"<Executed/>", 5, 100 )  ' deg C
+      cmd = "SetCondUnits=1"+CHR(13)+CHR(10)  : SerialOut(hydrocatPort, cmd, cmd+"<Executed/>", 5, 100 )  ' mS/cm
+      cmd = "SetPressUnits=0"+CHR(13)+CHR(10) : SerialOut(hydrocatPort, cmd, cmd+"<Executed/>", 5, 100 )  ' dBar
+      cmd = "SetOxUnits=1"+CHR(13)+CHR(10)    : SerialOut(hydrocatPort, cmd, cmd+"<Executed/>", 5, 100 )  ' mg/L
+
+      hydrocatState=3
+    Else
+      debugMessage="Cannot wake instrument" : Call Debug()
+      hydrocatState=6
+    EndIf
+  EndIf
+  
+  If hydrocatState=3 Then
+    debugMessage="Sampling Hydrocat" : Call Debug()
+    hydrocatState=4
+    SerialOutBlock(hydrocatPort,"TPS"+CHR(13)+CHR(10),5)
+  EndIf
+  
+  If hydrocatState=5 Then
+    debugMessage="Storing Hydrocat data" : Call Debug()
+    If hydrocatContinuous=true Then
+      ' Sample continuously - this is useful when first deployed to flush the cell.
+      ' Watch the values in the public table. This should be done for about 5 to 10 minutes.
+      ' In continuous sample mode no sample is stored.
+      hydrocatState=3
+    Else
+      CallTable Hydrocat
+      hydrocatState=6
+    EndIf
+  EndIf
+  
+  thresholdTime=hydrocatPowerOn+hydrocatPowerUpTime+hydrocatTimeout
+  If Status.Timestamp(0,0)>thresholdTime AND hydrocatState>0 AND hydrocatContinuous=false Then
+'    debugMessage="Timestamp "+currentTime : Call Debug()  
+'    debugMessage="Threshold Time"+thresholdTime : Call Debug()
+'    debugMessage="State = "+hydrocatState : Call Debug()
+    debugMessage="hydrocat power timeout - switching off." : Call Debug()
+    hydrocatState=6
+  EndIf
+  
+  If hydrocatState=6 Then
+    debugMessage="Switching off Hydrocat" : Call Debug()
+' No need to 
+'    SerialClose(hydrocatPort)
+    Call instPower(hydrocatInst, true)
+    
+    hydrocatState=0
+  EndIf
+
+
+  i=0   : ' i prevents the loop below becoming an infinite loop if something fails.
+  nBytes=1
+  tBytes=0
+  While (nBytes>0 AND i<5)
+    nBytes=SerialInChk(hydrocatPort)
+    if nBytes>0 Then
+      rBytes = SerialInBlock(hydrocatPort, hwBuffer, nBytes)
+      If rBytes>0 Then
+        tBytes=tBytes+rBytes
+        hwBuffer(1,1,rBytes+1)=CHR(0)
+        hydrocatBuffer = hydrocatBuffer + hwBuffer
+'       debugMessage="SBE37 < " + hwBuffer : Call Debug()
+      EndIf
+    EndIf
+    i=i+1
+  Wend
+  
+  If tBytes>0 Then
+    processHydrocat()
+  EndIf
+EndSub

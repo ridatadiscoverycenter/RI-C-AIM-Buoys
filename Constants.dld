@@ -1,0 +1,9 @@
+Dim PI As Float
+
+Const CR = CHR(13)
+Const LF = CHR(10)
+'Const CRLF = CHR(13) & CHR(10)
+
+Sub initConstants()
+  PI=4.*ATN(1)
+End Sub
