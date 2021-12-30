@@ -153,7 +153,7 @@ SlowSequence
       If (minutesIntoHour MOD 15) = 0 Then requestPAR=true
       If (minutesIntoHour MOD 15) = 0 Then requestECO=true
       If (minutesIntoHour MOD 15) = 0 Then requestHydrocat=true
-      If (hoursIntoDay MOD 6) = 0 Then requestSUNA=true
+      If (hoursIntoDay MOD 6) = 0 AND minutesIntoHour = 0 Then requestSUNA=true
       If (minutesIntoHour MOD 10) = 0 Then Call storeWindData()
       If (hoursIntoDay MOD 6) = 0 AND Hydrocyclerunning=false Then requestHydrocycle=true
       If (minutesIntoHour MOD 10) = 0 Then
