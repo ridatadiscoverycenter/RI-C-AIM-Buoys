@@ -26,7 +26,7 @@ Public sunaVoltageBoard As Float       : Units sunaVoltageBoard = Volts
 Public sunaVoltageProc As Float        : Units sunaVoltageProc  = Volts
 Public sunaVoltageHV As Float          : Units sunaVoltageHV    = Volts
 
-Public sunaStart As String *16
+Public sensorStart As String *16
 DataTable (SUNA, True, 1000)
   Sample(1,sunaSerial,String)
   Sample(1,sunaNitrateMicroMol,Float)
@@ -35,7 +35,7 @@ DataTable (SUNA, True, 1000)
   Sample(1,sunaInternalHumidity,Float)
 
   Sample(1,sunaTemperatureHousing,Float)
-  Sample(1, sunaStart, String)
+  Sample(1, sensorStart, String)
   
   'Sample(1,sunaTemperatureSpectro,Float)
   'Sample(1,sunaTemperatureLamp,Float)
@@ -76,7 +76,7 @@ Sub processSUNA()
   Dim val As Long
   
   If sunaStage=0 AND requestSUNA=true
-  sunaStart=Status.Timestamp(0,1)
+  sensorStart=Status.Timestamp(0,1)
   sunaStage=1
   EndIf
   If sunaStage=1 AND requestSUNA=true AND Status.Timestamp(0,0)>sunaOffTime+sunaOffInterlock Then

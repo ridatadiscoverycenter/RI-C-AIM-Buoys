@@ -19,7 +19,7 @@ Public hydrocatTurbidity As Float         : Units hydrocatTurbidity = NTU       
 Public hydrocatPH As Float                                                       ' : Alias hydrocatPH=pH
 Public hydrocatOxygenSaturation As Float : Units hydrocatOxygenSaturation = %
 Public requestHydrocat As Boolean
-Public hydrocatStartTime As String *16
+Public sensorStart As String *16
 Dim hydrocatContinuous As Boolean
 
 Dim hydrocatPowerOn As Long
@@ -43,7 +43,7 @@ DataTable (Hydrocat, True, 1000)
   Sample(1,hydrocatTurbidity,Float)
   Sample(1,hydrocatPH,Float)
   Sample(1,hydrocatOxygenSaturation,Float)
-  Sample(1,hydrocatStartTime,String)
+  Sample(1,sensorStart,String)
   
 EndTable
 
@@ -208,7 +208,7 @@ Sub sampleHydrocat()
   
   If requestHydrocat=true Then
     debugMessage="Hydrocat sample requested" : Call Debug()
-    hydrocatStartTime=Status.Timestamp(0,1)
+    sensorStart=Status.Timestamp(0,1)
     If hydrocatState=0 AND Battery1Voltage > 12.5 Then
       requestHydrocat=false
       hydrocatState=1

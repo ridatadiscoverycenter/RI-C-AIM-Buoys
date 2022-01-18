@@ -26,7 +26,7 @@ Dim Hydrocycleunits(27) As String
 Dim CAPO4units As String
 Dim VAPO4units As String 
 Public Hydrocyclesamplestage As Float
-Public Hydrocyclestart As String *16
+Public sensorStart As String *16
 Dim prevsamplestage As String
 Dim Hydrocyclestarttime As Float
 Dim Hydrocycletimeout As Float
@@ -53,7 +53,7 @@ DataTable Hydrocycle,True,1000
   Sample (1,Mixingval,Float)
   Sample (1,Calval,Float)
   Sample (1,VAS,Float)
-  Sample (1,Hydrocyclestart, String)
+  Sample (1,sensorStart, String)
 EndTable
 
 Sub initHydrocycle()
@@ -71,7 +71,7 @@ EndSub
 Sub Hydrocyclerun 
   If requestHydrocycle=true Then 
     requestHydrocycle=false
-    Hydrocyclestart=Status.Timestamp(0,1)
+    sensorStart=Status.Timestamp(0,1)
       If Battery1Voltage > 12.5 Then
       Erase(Hydrocyclebuffer)
       Erase(Hydrocycleparts())

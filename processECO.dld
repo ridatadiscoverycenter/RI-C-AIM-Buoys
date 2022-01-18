@@ -9,7 +9,7 @@ Dim ecoShutdownPause As Long
 
 Public ecoStage As Float
 Public ecoSerial As String *16
-Public ecoStart As String *16
+Public sensorStart As String *16
 Public ecoChannel(nEcoChans) As Float
 Public ecoFDOM As Float : Units ecoFDOM = ppb
 Alias ecoChannel(1) = ecoWavelength
@@ -23,7 +23,7 @@ DataTable (ECO, True, 1000)
   Sample(1,ecoSerial,String)
   Sample(nEcoChans,ecoChannel,Float)
   Sample(1,ecoFDOM,Float)
-  Sample(1,ecoStart,String)
+  Sample(1,sensorStart,String)
 EndTable
 
 Sub initECO()
@@ -57,7 +57,7 @@ Sub processECO()
   
   If ecoStage=0 AND requestECO=true Then
     requestECO=false
-    ecoStart=Status.Timestamp(0,1)
+    sensorStart=Status.Timestamp(0,1)
     If Battery1Voltage > 12.5 Then
     debugMessage = "Taking ECO-FL sensor reading" : Call Debug()
     ecoStage=1
@@ -80,20 +80,20 @@ Sub processECO()
     EndIf
   EndIf
   
-  If ecoStage=1 and Status.Timestamp(0,0)>ecoStartTime+ecoStartupPause Then
+  If ecoStage=1 AND Status.Timestamp(0,0)>ecoStartTime+ecoStartupPause Then
     SerialOutBlock(ecoPort, "$run"+CHR(13)+CHR(10), 6)
     ecoStartTime=Status.Timestamp(0,0)
     ecoStage=2
   EndIf
   
-  If ecoStage=2 and Status.Timestamp(0,0)>ecoStartTime+ecoSampleTime Then
+  If ecoStage=2 AND Status.Timestamp(0,0)>ecoStartTime+ecoSampleTime Then
         
     SerialOutBlock(ecoPort, "!!!!!", 5)
     ecoStartTime=Status.Timestamp(0,0)
     ecoStage=3
   EndIf
   
-  If ecoStage=3 and Status.Timestamp(0,0)>ecoStartTime+ecoShutdownPause Then
+  If ecoStage=3 AND Status.Timestamp(0,0)>ecoStartTime+ecoShutdownPause Then
        For i=1 to nEcoChans
       If ecoNReadings>0 Then
         ecoChannel(i)=ecoSum(i)/ecoNReadings(i)
