@@ -16,6 +16,7 @@ library('RMariaDB')
 library('pracma')
 library('dotenv')
 
+
 #Create automatic weekly date range
 end_date <-parse_date_time(Sys.Date(), c("%y-%m-%d"))#pulls current system date
 start_date <-end_date - days(7) #subtracts 7 days to get week range
