@@ -1,0 +1,94 @@
+Sub applyPower(inst As Long, on As Boolean)
+  Dim ok As Boolean
+  
+  If inst<1 Then ExitSub
+  If inst>nPower Then ExitSub
+
+  debugMessage="Power "
+  If on=true Then
+    debugMessage+="on"
+  Else
+    debugMessage+="off"
+  EndIf
+  debugMessage+=" request for instrument "+inst
+  Call Debug()
+    
+  If inst<=6 Then
+    Call digIoSetMappedPin(instPow(inst), on)
+    debugMessage="Instrument power set" : Call Debug()
+    powerState(inst)=on
+    lastPower(inst)=on
+  EndIf
+  
+  If inst=7 Then
+    SW12(1, on, 1)
+    debugMessage="Instrument power set" : Call Debug()
+    powerState(inst)=on
+    lastPower(inst)=on
+  EndIf
+  If inst=8 Then
+    SW12(2, on, 1)
+    debugMessage="Instrument power set" : Call Debug()
+    powerState(inst)=on
+    lastPower(inst)=on
+  EndIf
+  
+  If inst>=9 Then
+    Call digIoSetMappedPin(33+(inst-9), on)
+    debugMessage="Instrument power set" : Call Debug()
+    powerState(inst)=on
+    lastPower(inst)=on
+  EndIf
+  
+  CallTable Power
+EndSub
+
+Sub instPower(inst As Long, on As Boolean)
+  If inst<1 OR inst>nPower Then ExitSub
+  
+  instPwr(inst)=on
+  CallTable Power
+  
+  If forcePwr(inst)=true Then
+    debugMessage="Power override is set - not changing hardware." : Call Debug()
+    ExitSub
+  EndIf
+  
+  If userPwr(inst)=true And on=false Then ExitSub
+
+  Call applyPower(inst, on)
+EndSub
+
+Sub initPowerControl()
+  Dim i As Long
+  
+  Call digIoConfigMax7311AllOutputs(&h24) ' Configure MAX7311 on Power Switching board (address 24)
+
+  For i=1 to nPower
+    lastPower(i)=false
+    instPwr(i)=false
+    userPwr(i)=false
+    instPower(i, false)
+  Next i
+End Sub
+
+Sub applyUserPowerSettings()
+  Dim i As Long
+  Dim pState As Boolean
+  
+  For i=1 to nPower
+    pState=userPwr(i)
+    if instPwr(i)=true Then pState=true
+
+    If forcePwr(i)=true Then
+      pState=userPwr(i)
+    EndIf
+    
+    if pState<>lastPower(i) Then
+      applyPower(i, pState)
+      powerState(i)=pState
+    EndIf
+
+  Next i
+  CallTable Power
+EndSub

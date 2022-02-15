@@ -1,0 +1,71 @@
+Dim RASSWbuffer As String * RASSWbuffersize
+'Dim RASexample As Long
+Dim EventString As String * RASSWBuffersize
+
+DataTable (RAS,1,500) 'Set table size to # of records, or -1 to autoallocate.
+  Sample (1,EventString,String)
+EndTable
+
+Sub initRAS()
+  SerialOpen (RASport,RASbaud,0,0,RASHWbuffersize)
+EndSub
+
+Sub processRAS()
+  Dim RAStempbuffer As String * RASSWbuffersize
+'  RASexample = FileOpen ("CPU:Testline1.txt","r",0)
+'  debugmessage="RASexample="+RASexample : Call Debug()
+'  FileRead (RASexample,RASSWbuffer,RASSWbuffersize)
+'  FileClose (RASexample)
+'  debugmessage="read from file="+RASSWbuffer : Call Debug()
+  Dim Line As String *100
+  Dim EOL As Long
+  Dim Stringmarker1 As Long = 0
+  Dim Stringmarker2 As Long = 0
+  Dim Stringmarker3 As Long = 0
+  Dim Stringmarker4 As Long = 0
+  Dim Stringmarker5 As Long = 0
+  Dim nbytes As Long
+  Dim rbytes As Long
+  
+  nbytes = SerialInChk (RASPort)
+  rbytes=SerialInBlock (RASPort,RAStempbuffer,nbytes)
+  If rbytes=0 Then ExitSub
+  RAStempbuffer(1,1,rbytes+1)=CHR(0)
+  
+  RASSWbuffer = RASSWbuffer&RAStempbuffer
+  debugmessage="RASSWbuffer - +"+rbytes+"bytes ="+RASSWbuffer : Call Debug()
+
+  EOL=1   
+  While (EOL>0)
+    EOL = InStr (1,RASSWbuffer,LF,2)
+    debugmessage="EOL="+EOL : Call Debug()
+    If EOL>0 Then
+      Line = Left (RASSWbuffer,EOL)
+      RASSWbuffer = Right (RASSWbuffer,Len(RASSWbuffer)-EOL)
+      debugmessage="Line="+Line : Call Debug()
+   
+      Stringmarker1 = InStr (1,Line,"starting",2)
+      Stringmarker2 = InStr (1,Line,"Result:",2)
+      Stringmarker3 = InStr (1,Line,"Waiting",2)
+      Stringmarker4 = InStr (1,Line,"FLUSH",2)
+      Stringmarker5 = InStr (1,Line,"PUMPING",2)
+      If Stringmarker1<>0 OR Stringmarker2<>0 OR Stringmarker3<>0 OR Stringmarker4<>0 OR Stringmarker5<>0 Then
+        EventString=Line
+        CallTable RAS 
+      EndIf
+    EndIf
+  Wend
+EndSub    
+
+    
+    
+    
+    
+
+
+
+
+  
+
+
+

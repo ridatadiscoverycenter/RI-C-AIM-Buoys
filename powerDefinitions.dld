@@ -1,0 +1,14 @@
+Dim instPwr(nPower) As Boolean
+Public userPwr(nPower) As Boolean
+Dim forcePwr(nPower) As Boolean
+
+Dim powerState(nPower) As Boolean
+
+ReadOnly powerState
+
+Dim lastPower(nPower) As Boolean
+
+DataTable (Power, True, 1)
+  Sample(nPower, powerState, Boolean)
+  Sample(nPower, forcePwr, Boolean)
+EndTable
