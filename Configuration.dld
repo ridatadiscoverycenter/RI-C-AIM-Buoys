@@ -31,7 +31,7 @@ Const debugMETdecode = false
 Const ecoInst=5
 Const ecoMode=0 'RS232
 Const ecoPort=ComU9
-Const ecoBAUD=19200
+Const ecoBAUD=9600
 Const ecoHWBufferSize=256
 Const nEcoChans=3
 

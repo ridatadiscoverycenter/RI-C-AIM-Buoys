@@ -1,0 +1,220 @@
+Dim requestSunSaver As Boolean
+Public Serial As String * 10
+Public Version As String * 10
+Public LoggerVoltage As Float
+Public LoggerTemperature As Float
+
+Include "CPU:Constants.DLD"
+Include "CPU:Configuration.dld"
+Include "CPU:DigitalIO_Enc-1.1-0.dld"
+Include "CPU:SerialInstrumentIO_Enc-1.0-3.dld"
+Include "CPU:campbellDebug_Enc-1.2-2.dld"
+Include "CPU:powerDefinitions.dld"
+Include "CPU:powerControl.dld"
+Include "CPU:settings_Enc-1.0-1.dld"
+
+Include "CPU:nmea0183Parser_Enc-2.1-2.DLD"
+Include "CPU:nmeaHelpers_Enc-2.1-2.DLD"
+Include "CPU:gpsDecoder_Enc-2.1-2.DLD"
+Include "CPU:maximetDecoder_Enc-2.1-4.DLD"
+
+Include "CPU:cell215Control_Enc-1.1-9.dld"
+Include "CPU:SunsaverDuo_Enc-1.0-4.dld"
+Include "CPU:positionReference_Enc-1.0-2.DLD"
+Include "CPU:processMaximet.DLD"
+Include "CPU:processPAR.DLD"
+Include "CPU:processECO.DLD"
+Include "CPU:processSUNA.DLD"
+Include "CPU:processHydrocat.DLD"
+Include "CPU:processMicrocat.DLD"
+Include "CPU:processRAS.DLD"
+
+Dim driftAlarm As Boolean
+
+DataTable (System,1,-1) 'Set table size to # of records, or -1 to autoallocate.
+  Sample(1,LoggerVoltage,FP2)
+  Sample(1,LoggerTemperature,FP2)
+  Sample(1,Battery1Voltage,FP2)
+  Sample(1,SolarVoltage,FP2)
+  Sample(1,Battery1Current,FP2)
+EndTable
+
+Sub readLocalSetting(key As String * settingsKeyLength, value As String * settingsKeyLength)
+  Dim test As Long
+  
+  debugMessage = "Read Setting with key: '"+key+"' and value: '"+value+"'" : Call Debug()
+  If key="serial_n" Then MoveBytes(Serial,0,value,0,10)
+  If key="watchCircle" Then watchCircle=value
+ 
+  If key="example" Then
+    test=value
+    debugMessage = "Example read as long (value="+test+")" : Call Debug()
+  EndIf
+End Sub
+
+Sub setGlobalDefaults()
+  PI=3.1415926536
+  Serial="Unknown"
+  Version="v1.0-0"
+  requestSunSaver=true
+  driftAlarm=false
+  resetInitialPosition=false
+EndSub
+
+Sub readSettingsFile()
+  Dim ok As Boolean
+  Dim key As String * settingsKeyLength
+  Dim value As String * settingsValueLength
+  
+  debugMessage = "Reading settings" : Call Debug()
+
+  setGlobalDefaults()
+
+  settingsInit()
+  ok=true
+  While(ok=true)
+    settingsRead(key, value, ok)
+    gsmReadSetting(key, value)
+    readLocalSetting(key, value)
+  Wend
+End Sub
+
+BeginProg
+  Dim i As Long
+  Dim s As Long
+  Dim runState As Boolean
+
+  runState=false
+  
+  initConstants()
+  
+  Delay (1,5,Sec)
+  debugMessage="******************" : Call Debug()
+  debugMessage="* OSIL Data Buoy *" : Call Debug()
+  debugMessage="******************" : Call Debug()
+  debugMessage="Software version : "+Version     : Call Debug()
+  debugMessage="System starting, please wait..." : Call Debug()
+
+' Initialise instrument control and set all instruments off & RS232 by default
+  Call instCtlInitialise()
+  For i=1 To 6  
+    Call instConfig(i, 0, false)
+  Next i
+  initPowerControl()
+  
+  gsmInit()
+  initMaximet()
+  initPAR()
+  initECO()
+  initSUNA()
+  initHydrocat()
+  initHydrocycle()
+  initRAS()
+  
+  readSettingsFile()
+  
+  sunsaverDuoInit()
+  
+  debugMessage="System Running." : Call Debug()
+  runState=true
+  
+  ' This is the primary scan loop. The majority of instrument handling should be done here.
+  Scan (200,mSec,0,0)    
+
+    Battery(LoggerVoltage)
+    PanelTemp(LoggerTemperature,50)
+ 
+    processMaximet()
+    processPAR()
+    processECO()
+    processSUNA()
+    sampleHydrocat()
+    Hydrocyclerun()
+    processRAS()
+    processMicrocat()
+  NextScan
+  
+SlowSequence
+  Dim secondsIntoMinute As Long
+  Dim minutesIntoHour As Long
+  Dim hoursIntoDay As Long
+  
+  Do While (runState=false)
+    Delay (1,5,Sec)
+  Loop
+  
+  Scan(1,Sec,0,0)
+    secondsIntoMinute=Status.TimeStamp(6,0)
+    minutesIntoHour=Status.TimeStamp(5,0) / 60
+    hoursIntoDay=Status.TimeStamp(4,0) / 3600
+    
+    If secondsIntoMinute = 0 Then
+      If (minutesIntoHour MOD 5) = 0 Then CallTable system
+      If (minutesIntoHour MOD 5) = 0 Then Call gsmStart()
+      If (minutesIntoHour MOD 15) = 0 Then requestPAR=true
+      If (minutesIntoHour MOD 15) = 5 Then requestECO=true
+      If (hoursIntoDay MOD 6) = 0 AND minutesIntoHour=30 Then requestSUNA=true
+      If (minutesIntoHour MOD 15) = 10 Then requestHydrocat=true
+      If (minutesIntoHour MOD 10) = 0 Then Call storeWindData()
+      If (hoursIntoDay MOD 6) = 0 AND Hydrocyclerunning=false Then requestHydrocycle=true
+      If (minutesIntoHour MOD 10) = 0 Then
+        #If gsmInfoTable=true
+          gsmSignal=Settings.CellRSSI
+          CallTable gsmInfo
+        #EndIf
+      EndIf
+    EndIf
+
+    ' Stop the GSM Comms once a day to reduce risk of modem lockup
+    If hoursIntoDay=0 AND minutesIntoHour=2 Then Call gsmStop()
+
+    If (secondsIntoMinute MOD 10) = 0 Then requestSunSaver=true
+    
+    ' Any user controlled actions go here. They must be "quick" code.
+    ' I.e. nothing which will cause a skipped scan in this loop...
+    If resetInitialPosition=true Then
+      resetInitialPosition=false
+      initPositionReference()
+    EndIf
+    
+    applyUserPowerSettings()
+  
+  NextScan
+
+SlowSequence
+  Do While (runState=false)
+    Delay (1,5,Sec)
+  Loop 
+
+' Any non-time-critical processes go here. Polling solar regulators, start
+  Do While(true)
+    If requestSunSaver=true Then
+      requestSunSaver=false
+      sunsaverPoll()
+    EndIf
+
+    If PositionDev>watchCircle Then
+      If driftAlarm=false Then
+        'Action to be triggered on drift alarm edge...
+        debugMessage="Drift alarm detected." : Call Debug()
+      EndIf
+      driftAlarm=true
+    EndIf
+    If PositionDev<watchCircle Then driftAlarm=false
+    
+  Loop
+
+SlowSequence
+' This sequence separates out the GSM comms setup as it's pretty critical that this
+' doesn't get held up by anything else.
+
+  Do While (runState=false)
+    Delay (1,5,Sec)
+  Loop 
+
+  Do While(true)
+    gsmControl()
+  Loop
+  
+End
+

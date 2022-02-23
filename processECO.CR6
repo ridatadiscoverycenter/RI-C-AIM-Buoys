@@ -4,7 +4,7 @@ Dim ecoBuffer      as String * 512
 'Dim parReadings   as Long
 Dim ecoStartTime  As Long
 Dim ecoSampleTime as Long
-Dim ecoStartupPause As Long
+Dim ecoStartupPause as Long
 Dim ecoShutdownPause As Long
 
 Public ecoStage As Float
@@ -13,11 +13,12 @@ Public ecoStart As String *16
 Public ecoChannel As Float
 Public ecoFDOM As Float : Units ecoFDOM = ppb
 
-Public ecoSum As Float
-Public ecoNReadings As Long
+Dim ecoSum As Float
+Dim ecoNReadings As Long
 Dim ecoConverted As Float
 
 DataTable (ECO, True, 1000)
+  Sample(1,ecoSerial,String)
   Sample(1,ecoChannel,Float)
   Sample(1,ecoFDOM,Float)
   Sample(1,ecoStart,String)
@@ -33,9 +34,9 @@ Sub initECO()
   ecoConverted=0
   ecoFDOM=0
   ecoStage=0
-  ecoChannel=0
-  ecoSum=0
-  ecoNReadings=0
+    ecoChannel=0
+    ecoSum=0
+    ecoNReadings=0
 
 
   Call instConfig(ecoInst, ecoMode, false)
@@ -46,7 +47,7 @@ Sub processECO()
   Dim nBytes As Long
   Dim msg as String * ecoHWBufferSize
   Dim lineEnd As Long
-  Dim lineData As String * 20
+  Dim lineData(nEcoChans+2) As String * 20
   Dim val As Long
   
   If ecoStage=0 AND requestECO=true Then
@@ -54,10 +55,11 @@ Sub processECO()
     ecoStart=Status.Timestamp(0,1)
     debugMessage = "Taking ECO-FL sensor reading" : Call Debug()
     ecoStage=1
-    ecoChannel=0
-    ecoSum=0
-    ecoNReadings=0
-    ecoFDOM=0
+      ecoChannel=0
+      ecoSum=0
+      ecoNReadings=0
+
+ 
     ecoStartTime=Status.Timestamp(0,0)
     Call instPower(ecoInst, true)
   EndIf
@@ -75,18 +77,19 @@ Sub processECO()
   If ecoStage=3 AND Status.Timestamp(0,0)>ecoStartTime+ecoShutdownPause Then
       If ecoNReadings>0 Then
         ecoChannel=ecoSum/ecoNReadings
-        ecoConverted=((0.0334)*(ecoChannel-78)) 
       Else
         ecoChannel=0
       EndIf
-   ecoFDOM=ecoConverted
-   ecoStage=4
+  ecoConverted=((0.0334)*(ecoReadingRaw-78)
+  ecoFDOM=ecoConverted
+  ecoStage=4 
 EndIf
     
 If ecoStage=4
     CallTable ECO
     debugMessage = "Completed ECO-FL sensor reading" : Call Debug()
-    Call instPower(ecoInst, true)
+    
+    Call instPower(ecoInst, false)
     ecoStage=0
   EndIf
 
@@ -120,7 +123,7 @@ If ecoStage=4
 '        Next i
         ' Handle data...
         If ecoStage<3 Then
-            ecoChannel=lineData
+            ecoChannel=lineData(1)
             If ecoChannel<>NAN Then
               ecoSum=ecoSum+ecoChannel
               ecoNReadings=ecoNReadings+1

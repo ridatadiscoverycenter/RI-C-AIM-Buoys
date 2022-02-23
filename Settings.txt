@@ -1,4 +1,4 @@
-serial_n	DB20040720
+serial_n	SP20040820
 gsmapn	ne01.vzwstatic
 gsmuser	ocean
 gsmpass	ocean

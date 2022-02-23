@@ -79,23 +79,39 @@ Sub processSUNA()
   sunaStart=Status.Timestamp(0,1)
   sunaStage=1
   EndIf
-  
   If sunaStage=1 AND requestSUNA=true AND Status.Timestamp(0,0)>sunaOffTime+sunaOffInterlock Then
     requestSUNA=false
     debugMessage = "Taking SUNA sensor reading" : Call Debug()
+     If  Battery1Voltage = 0 Then
+  
     sunaSerial="Unknown"
     sunaNitrateMicroMol=0
     sunaNitrateMilliGrams=0
     sunaInternalHumidity=0
-    For i=1 To sunaSWBufferSize
+  
+    For i=1 to sunaSWBufferSize
       sunaBuffer(1,1,i)=CHR(0)
     Next i
+       
     SerialFlush(sunaPort)
+       
     sunaStartTime=Status.Timestamp(0,0)
     Call instPower(sunaInst, true)
     SerialOut(sunaPort, "$"+CRLF, "", 5, 1000)
     sunaStage=2
-     
+    Else
+      debugMessage = "Battery Voltage Low" : Call Debug()
+      sunaSerial="NAN"
+      sunaNitrateMicroMol="NAN"
+      sunaNitrateMilliGrams="NAN"
+      sunaInternalHumidity="NAN"
+      sunaTemperatureHousing="NAN"
+      sunaTemperatureSpectro="NAN"
+      sunaTemperatureLamp="NAN"
+      sunaInternalHumidity="NAN"
+      requestSUNA=false
+      sunaStage=11
+      EndIf      
   EndIf
     
   If sunaStage>0 AND Status.Timestamp(0,0)>sunaStartTime+sunaTimeout Then
@@ -117,7 +133,7 @@ Sub processSUNA()
     sunaStage=4
   EndIf
 
-  If sunaStage=5 Then
+  If sunaStage=4 Then
     debugMessage = "SUNA configuring output for robustness" : Call Debug()
     cmd="set --outfrtyp CONCENTRATION"
     If SerialOut(sunaPort, cmd+CRLF, "$Ok", 5, 1000)=0 Then sunaStage=11
@@ -136,10 +152,10 @@ Sub processSUNA()
     debugMessage = "Starting SUNA measurements" : Call Debug()
     cmd="Start"
     SerialOutBlock(sunaPort, cmd+CHR(13)+CHR(10), Len(cmd)+2)
-    sunaStage=6
+    sunaStage=5
   EndIf
   
-  If sunaStage=6 AND Status.Timestamp(0,0)>sunaStartTime+sunaSleepTime Then
+  If sunaStage=5 AND Status.Timestamp(0,0)>sunaStartTime+sunaSleepTime Then
     debugMessage = "SUNA sensor entering low power mode" : Call Debug()
     SerialOut(sunaPort, "$"+CRLF, "CMD?", 5, 1000)
     sunaStage=11
