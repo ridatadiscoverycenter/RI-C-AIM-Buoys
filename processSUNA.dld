@@ -1,0 +1,257 @@
+'Const sunaSWBufferSize=512
+
+Public requestSUNA   as Boolean
+Dim sunaBuffer       as String * sunaSWBufferSize
+
+'Dim parReadings     as Long
+Public sunaStage     As Long
+Dim sunaStartTime    As Long
+Dim sunaStartupTime  As Long
+Dim sunaOffTime      As Long
+Dim sunaOffInterlock As Long
+Dim sunaSleepTime    As Long
+Dim sunaTimeout      As Long
+
+Public sunaSerial As String *32
+Public sunaNitrateMicroMol As Float    : Units sunaNitrateMicroMol    = uMol
+Public sunaNitrateMilliGrams As Float  : Units sunaNitrateMilliGrams  = mg/L
+Public sunaInternalHumidity As Float   : Units sunaInternalHumidity   = %
+
+Public sunaTemperatureHousing As Float : Units sunaTemperatureHousing = deg C
+Public sunaTemperatureSpectro As Float : Units sunaTemperatureSpectro = deg C
+Public sunaTemperatureLamp As Float    : Units sunaTemperatureLamp    = deg C
+
+Public sunaVoltageMain As Float        : Units sunaVoltageMain  = Volts
+Public sunaVoltageBoard As Float       : Units sunaVoltageBoard = Volts
+Public sunaVoltageProc As Float        : Units sunaVoltageProc  = Volts
+Public sunaVoltageHV As Float          : Units sunaVoltageHV    = Volts
+
+Public sunaStart As String *16
+DataTable (SUNA, True, 1000)
+  Sample(1,sunaSerial,String)
+  Sample(1,sunaNitrateMicroMol,Float)
+  Sample(1,sunaNitrateMilliGrams,Float)
+  
+  Sample(1,sunaInternalHumidity,Float)
+
+  Sample(1,sunaTemperatureHousing,Float)
+  Sample(1, sunaStart, String)
+  
+  'Sample(1,sunaTemperatureSpectro,Float)
+  'Sample(1,sunaTemperatureLamp,Float)
+
+  'Sample(1,sunaVoltageMain,Float)
+  'Sample(1,sunaVoltageBoard,Float)
+  'Sample(1,sunaVoltageProc,Float)
+  'Sample(1,sunaVoltageHV,Float)
+EndTable
+
+Sub initSUNA()
+  requestSUNA=false
+  sunaStartTime=0
+  sunaStartupTime=15
+  sunaOffTime=Status.Timestamp(0,0)
+  sunaOffInterlock=90
+  sunaSleepTime=120
+  sunaTimeout=300
+  
+  sunaStage=0
+  sunaSerial="Unknown"
+  sunaNitrateMicroMol=0
+  sunaNitrateMilliGrams=0
+  sunaInternalHumidity=0
+
+  Call instConfig(sunaInst, sunaMode, false)
+  SerialOpen(sunaPort,sunaBAUD,16,0,sunaHWBufferSize)
+EndSub
+
+Sub processSUNA()
+  Dim nBytes As Long
+  Dim rBytes As Long
+  Dim msg as String * sunaHWBufferSize+1
+  Dim cmd as String * 32
+  Dim lineEnd As Long
+  Dim lineData(9) As Float
+  Dim i As long
+  Dim val As Long
+  
+  If sunaStage=0 AND requestSUNA=true
+  sunaStart=Status.Timestamp(0,1)
+  sunaStage=1
+  EndIf
+  If sunaStage=1 AND requestSUNA=true AND Status.Timestamp(0,0)>sunaOffTime+sunaOffInterlock Then
+    requestSUNA=false
+    debugMessage = "Taking SUNA sensor reading" : Call Debug()
+     If  Battery1Voltage > 12.5 Then
+  
+    sunaSerial="Unknown"
+    sunaNitrateMicroMol=0
+    sunaNitrateMilliGrams=0
+    sunaInternalHumidity=0
+  
+    For i=1 to sunaSWBufferSize
+      sunaBuffer(1,1,i)=CHR(0)
+    Next i
+       
+    SerialFlush(sunaPort)
+       
+    sunaStartTime=Status.Timestamp(0,0)
+    Call instPower(sunaInst, true)
+    SerialOut(sunaPort, "$"+CRLF, "", 5, 1000)
+    sunaStage=2
+    Else
+      debugMessage = "Battery Voltage Low" : Call Debug()
+      sunaSerial="NAN"
+      sunaNitrateMicroMol="NAN"
+      sunaNitrateMilliGrams="NAN"
+      sunaInternalHumidity="NAN"
+      sunaTemperatureHousing="NAN"
+      sunaTemperatureSpectro="NAN"
+      sunaTemperatureLamp="NAN"
+      sunaInternalHumidity="NAN"
+      requestSUNA=false
+      sunaStage=11
+      EndIf      
+  EndIf
+    
+  If sunaStage>0 AND Status.Timestamp(0,0)>sunaStartTime+sunaTimeout Then
+    debugMessage = "SUNA reading timed out" : Call Debug()
+    sunaStage=11
+  EndIf
+  
+  If sunaStage=2 AND Status.Timestamp(0,0)>sunaStartTime+sunaStartupTime Then
+    debugMessage = "Configuring SUNA sensor" : Call Debug()
+    If SerialOut(sunaPort, "$"+CRLF, "SUNA>", 5, 1000)>0 Then
+      sunaStage=3
+    EndIf
+  EndIf
+  
+  If sunaStage=3 Then
+    debugMessage = "Querying SUNA device information" : Call Debug()
+    cmd="SelfTest"
+    SerialOutBlock(sunaPort, cmd+CHR(13)+CHR(10), Len(cmd)+2)
+    sunaStage=4
+  EndIf
+
+  If sunaStage=5 Then
+    debugMessage = "SUNA configuring output for robustness" : Call Debug()
+    cmd="set --outfrtyp CONCENTRATION"
+    If SerialOut(sunaPort, cmd+CRLF, "$Ok", 5, 1000)=0 Then sunaStage=11
+    debugMessage = "SUNA setting duration control" : Call Debug()
+    cmd="set --operctrl Duration"
+    If SerialOut(sunaPort, cmd+CRLF, "$Ok", 5, 1000)=0 Then sunaStage=11
+    debugMessage = "SUNA setting polled output" : Call Debug()
+    cmd="set --opermode Polled"
+    If SerialOut(sunaPort, cmd+CRLF, "$Ok", 5, 1000)=0 Then sunaStage=11
+    debugMessage = "SUNA wiping sensor" : Call Debug()
+    cmd="Special SwipeWiper"
+    If SerialOut(sunaPort, cmd+CRLF, "$Ok", 5, 20000)=0 Then sunaStage=11
+    debugMessage = "Exiting Setup" : Call Debug()
+    cmd="Exit"
+     If SerialOut(sunaPort, cmd+CRLF, "$Ok", 5, 20000)=0 Then sunaStage=11
+    debugMessage = "Starting SUNA measurements" : Call Debug()
+    cmd="Start"
+    SerialOutBlock(sunaPort, cmd+CHR(13)+CHR(10), Len(cmd)+2)
+    sunaStage=6
+  EndIf
+  
+  If sunaStage=6 AND Status.Timestamp(0,0)>sunaStartTime+sunaSleepTime Then
+    debugMessage = "SUNA sensor entering low power mode" : Call Debug()
+    SerialOut(sunaPort, "$"+CRLF, "CMD?", 5, 1000)
+    sunaStage=11
+   EndIf
+
+  If sunaStage=11 Then
+    Calltable SUNA
+    debugMessage = "SUNA powering off" : Call Debug()
+    Call instPower(sunaInst, false)
+    sunaOffTime=Status.Timestamp(0,0)
+    requestSUNA=false
+    sunaStage=0
+  EndIf
+
+  If sunaStage>0 Then
+    nBytes=SerialInChk(sunaPort)
+    If nBytes=0 Then ExitSub
+  
+    rBytes=SerialInBlock(sunaPort, msg, nBytes)
+    msg(1,1,rBytes+1)=CHR(0)
+    sunaBuffer=sunaBuffer+msg
+
+'    debugMessage="SUNA Buffer : "+sunaBuffer : Call debug()
+
+    lineEnd=1
+    While (lineEnd>0)
+      lineEnd=InStr(1, sunaBuffer, LF, 2 )
+      If lineEnd>0 Then
+'        debugMessage="Line end found at byte "+lineEnd : Call Debug()
+        msg=Left(sunaBuffer,lineEnd)
+        sunaBuffer=Right(sunaBuffer, Len(sunaBuffer)-lineEnd)
+        
+'        debugMessage="Message "+msg : Call Debug()
+'        debugMessage="Buffer  "+sunaBuffer : Call Debug()
+        
+        'Process startup message...
+        If InStr(1, msg, "INFO-Start", 2)>0 Then
+          sunaSerial = Trim( Right(msg, Len(msg)-(InStr(1, msg, "INFO-Start", 2)+10)) )
+        EndIf        
+        
+        'Process sample message
+        If InStr(1, msg, "SATSLC", 2)>0 Then
+          SplitStr(lineData, msg, ",", 9, 0)
+          
+          sunaNitrateMicroMol=lineData(4)
+          sunaNitrateMilliGrams=lineData(5)
+          ' 6 is absorption at 254nm
+          ' 7 is absorption at 350nm
+          ' 8 is bromine trace
+          
+        EndIf
+        
+        'Process shut down message
+        If InStr(1, msg, "finished", 2)>0 Then
+          sunaStage=11
+'          debugMessage="finished found at "+InStr(1, msg, "finished", 2)+" - New Stage = "+sunaStage : Call Debug()
+        EndIf
+        
+        'Process OK message
+        If InStr(1, msg, "$Ok", 2)>0 Then
+          sunaStage=sunaStage+1
+'          debugMessage="$Ok found at "+InStr(1, msg, "$Ok", 2)+" - New Stage = "+sunaStage : Call Debug()
+        EndIf
+ 
+        'Process OK message
+        If InStr(1, msg, "$Error", 2)>0 Then
+          debugMessage="SUNA - Error encountered at stage"+sunaStage : Call Debug()
+          sunaStage=11
+        EndIf
+        
+        'Process Self-test humidity message
+        If InStr(1, msg, "Humidity", 2)>0 Then
+          SplitStr(lineData, msg, ",", 9, 0)
+          sunaInternalHumidity=lineData(1)
+        EndIf
+        
+        'Process Self-test temperature message
+        If InStr(1, msg, "Temperature", 2)>0 Then
+          SplitStr(lineData, msg, ",", 9, 0)
+          sunaTemperatureHousing = lineData(1)
+          sunaTemperatureSpectro = lineData(2)
+          sunaTemperatureLamp    = lineData(3)
+          
+        EndIf
+        
+        'Process Self-test voltage message
+        If InStr(1, msg, "Electrical", 2)>0 Then
+          SplitStr(lineData, msg, ",", 9, 0)
+          sunaVoltageMain =lineData(1)
+          sunaVoltageBoard=lineData(2)
+          sunaVoltageProc =lineData(3)
+          sunaVoltageHV   =lineData(4)
+        EndIf
+  
+      EndIf
+    Wend
+    
+  EndIf
+EndSub

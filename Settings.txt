@@ -1,0 +1,5 @@
+serial_n	DB20040720
+gsmapn	ne01.vzwstatic
+gsmuser	ocean
+gsmpass	ocean
+gsmretries	3

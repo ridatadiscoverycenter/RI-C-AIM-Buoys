@@ -1,0 +1,220 @@
+Public requestHydrocycle As Boolean
+Dim SerialNo As Float
+Public CAPO4 As Float
+Public VAPO4 As Float
+Dim Hydrocycle_Voltage As Float : Units Hydrocycle_Voltage = V
+Public QCflag As Float
+Dim Bubbleflag As Float
+Dim COVflag As Float
+Dim Lowsigflag As Float
+Dim OoRflag As Float
+Dim Mixingflag As Float
+Dim Calflag As Float
+Dim Bubbleval As Float
+Dim COVval As Float
+Dim Lowsigval As Float
+Dim OORval As Float
+Dim Mixingval As Float
+Dim Calval As Float
+Dim VAS As Float
+
+Dim Hydrocyclebuffer As String * hydrocycleSWbuffersize
+Dim Hydrocyclestate As Float
+Public Hydrocyclerunning As Boolean 
+Dim Hydrocycleparts(27) As Float
+Dim Hydrocycleunits(27) As String
+Dim CAPO4units As String
+Dim VAPO4units As String 
+Public Hydrocyclesamplestage As Float
+Public Hydrocyclestart As String *16
+Dim prevsamplestage As String
+Dim Hydrocyclestarttime As Float
+Dim Hydrocycletimeout As Float
+
+DataTable Hydrocycle,True,1000
+ ' Sample (1,samplestage,String)
+  Sample (1,SerialNo,Float)
+  Sample (1,CAPO4,Float)
+  Sample (1,CAPO4units,String)
+  Sample (1,VAPO4,Float)
+  Sample (1,VAPO4units,String)
+  Sample (1,Hydrocycle_Voltage,Float)
+  Sample (1,QCflag,Float)
+  Sample (1,Bubbleflag,Float)
+  Sample (1,COVflag,Float)
+  Sample (1,Lowsigflag,Float)
+  Sample (1,OoRflag,Float)
+  Sample (1,Mixingflag,Float)
+  Sample (1,Calflag,Float)
+  Sample (1,Bubbleval,Float)
+  Sample (1,COVval,Float)
+  Sample (1,Lowsigval,Float)
+  Sample (1,OORval,Float)
+  Sample (1,Mixingval,Float)
+  Sample (1,Calval,Float)
+  Sample (1,VAS,Float)
+  Sample (1,Hydrocyclestart, String)
+EndTable
+
+Sub initHydrocycle()
+  Erase(Hydrocyclebuffer)
+  SerialNo=0
+  Call instConfig(HydrocycleInst,HydrocycleMode,false)
+  SerialOpen (HydroCycleport,HydrocycleBAUD,16,0,hydrocycleHWbuffersize)
+  Hydrocyclestate=0
+  Hydrocyclerunning=false
+  requestHydrocycle=false
+  Hydrocyclestarttime=0
+  Hydrocycletimeout=2400
+EndSub
+
+Sub Hydrocyclerun 
+  If requestHydrocycle=true Then 
+    requestHydrocycle=false
+    Hydrocyclestart=Status.Timestamp(0,1)
+      If Battery1Voltage > 12.5 Then
+      Erase(Hydrocyclebuffer)
+      Erase(Hydrocycleparts())
+      Erase(Hydrocycleunits())
+      SerialFlush(Hydrocycleport)
+      Call instPower(HydrocycleInst,true)
+      Hydrocyclestarttime=Status.Timestamp(0,0)
+      SerialOut (Hydrocycleport,"$"+CHR(13),"",0,0)
+      Hydrocyclestate=1
+      prevsamplestage="Completed"
+      debugmessage="Hydrocycle powered" : Call Debug()
+      Delay (0,1,sec)
+        Else 
+          Erase(Hydrocyclebuffer)
+          Erase(Hydrocycleparts())
+          Erase(Hydrocycleunits())
+          SerialNo="NAN"
+          CAPO4="NAN"
+          VAPO4="NAN"
+          Hydrocycle_Voltage="NAN"
+          QCflag="NAN"
+          Bubbleflag="NAN"
+          COVflag="NAN"
+          Lowsigflag="NAN"
+          OoRflag="NAN"
+          Calflag="NAN"
+          Bubbleval="NAN"
+          COVval="NAN"
+          Lowsigval="NAN"
+          OORval="NAN"
+          Mixingval="NAN"
+          Calval="NAN"
+          VAS="NAN"
+          Hydrocyclestate=4
+          CallTable Hydrocycle
+          Hydrocyclerunning=false
+          Call instPower(HydrocycleInst,false)
+          debugmessage="Hydrocycle off" : Call Debug()
+          Hydrocyclestate=0
+          Erase(Hydrocyclebuffer)
+          SerialNo=0
+    EndIf
+  EndIf
+   If Hydrocyclestate=1 Then
+      Hydrocyclestate=2
+   EndIf
+  If Hydrocyclestate=2 AND Hydrocyclerunning=false Then
+     SerialOut (Hydrocycleport,"$RUN"+CHR(13),"",0,0)
+     Hydrocyclerunning=true
+     Hydrocyclestate=3
+     debugmessage="Hydrocycle running" : Call Debug()
+  EndIf
+ 
+
+  Call processHydrocycle()
+EndSub
+
+Sub processHydrocycle 'to be called in main scan loop
+  If Hydrocyclestate=0 Then
+    ExitSub
+  EndIf
+   If Status.Timestamp(0,0)>Hydrocyclestarttime+Hydrocycletimeout Then
+    debugmessage="Hydrocycle timed out" : Call Debug()
+    SerialOut (Hydrocycleport,"$STP /I"+CHR(13),"",0,100)
+    Hydrocyclerunning=false
+    SerialOut (Hydrocycleport,"$SLP"+CHR(13),"",0,100)
+    Call instPower(HydrocycleInst,false)
+    debugmessage="Hydrocycle off" : Call Debug()
+    Hydrocyclestate=0
+    Erase(Hydrocyclebuffer)
+    SerialNo=0
+  EndIf
+  Dim i As Long
+  Dim startstring As Long
+  Dim validstring As Long
+  startstring=0
+  validstring=0
+  If Hydrocyclestate=2 Then
+    SerialIn (Hydrocyclebuffer,HydrocyclePort,200,-1,500)
+  Else
+    SerialIn (Hydrocyclebuffer,HydrocyclePort,10,CHR(13),500)
+  EndIf
+  validstring = InStr (1,Hydrocyclebuffer,":",2)
+  If validstring<>0 Then
+'    debugmessage="Hydrocycleprocess, Hydrocyclebuffer="+Hydrocyclebuffer : Call Debug()
+    SplitStr (Hydrocycleparts,Hydrocyclebuffer,CHR(9),27,0)
+    SplitStr (Hydrocycleunits,Hydrocyclebuffer,CHR(9),27,1)
+  '  For i=1 To 27
+  '   debugmessage="Hydrocycleparts("+i+")="+Hydrocycleparts(i) : Call Debug()
+  '  Next i 
+    startstring = InStr (1,Hydrocycleunits(1),"Program",2)
+    If startstring<>0 Then
+      SerialNo=Hydrocycleparts(9)
+'      debugmessage="SerialNo="+SerialNo : Call Debug()
+    ElseIf startstring=0 AND Hydrocycleparts(13)="NAN" Then
+      Hydrocyclesamplestage = Hydrocycleparts(9)
+      If Hydrocyclesamplestage<>prevsamplestage Then
+'        debugmessage="Hydrocycle sample stage="+Hydrocyclesamplestage : Call Debug()
+        prevsamplestage=Hydrocyclesamplestage
+      EndIf
+    ElseIf startstring=0 AND Hydrocycleparts(13)<>"NAN" Then
+'      debugmessage="Engineering mode string detected as: "+Hydrocyclebuffer : Call Debug()
+  '    For i=1 To 27
+  '      debugmessage="Hydrocycleparts("+i+")="+Hydrocycleparts(i) : Call Debug()
+  '    Next i 
+  '    For i=1 To 27
+  '      debugmessage="Hydrocycleunits("+i+")="+Hydrocycleunits(i) : Call Debug()
+  '    Next i 
+      CAPO4=Hydrocycleparts(9)
+      CAPO4units=Hydrocycleunits(10)
+      VAPO4=Hydrocycleparts(10)
+      VAPO4units=Hydrocycleunits(11)
+      Hydrocycle_Voltage=Hydrocycleparts(11)
+      QCflag=Hydrocycleparts(12)
+      Bubbleflag=Hydrocycleparts(13)
+      COVflag=Hydrocycleparts(14)
+      Lowsigflag=Hydrocycleparts(15)
+      OoRflag=Hydrocycleparts(16)
+      Mixingflag=Hydrocycleparts(17)
+      Calflag=Hydrocycleparts(18)
+      Bubbleval=Hydrocycleparts(19)
+      COVval=Hydrocycleparts(20)
+      Lowsigval=Hydrocycleparts(21)
+      OORval=Hydrocycleparts(22)
+      Mixingval=Hydrocycleparts(23)
+      Calval=Hydrocycleparts(24)
+      VAS=Hydrocycleparts(25)
+      Hydrocyclesamplestage="Complete"
+    
+      CallTable Hydrocycle
+     SerialOut (Hydrocycleport,"$STP /I"+CHR(13),"",0,100)
+      debugmessage="Stopping Hydrocycle run"
+      SerialOut (Hydrocycleport,"$SLP"+CHR(13),"",0,100)
+      debugmessage="Putting Hydrocycle to sleep"
+      Hydrocyclerunning=false
+      Call instPower(HydrocycleInst,false)
+      debugmessage="Hydrocycle off" : Call Debug()
+      Hydrocyclestate=0
+      Erase(Hydrocyclebuffer)
+      SerialNo=0
+    EndIf
+   EndIf
+EndSub
+
+'needs to clock when engineering units string has come through, pull values from that and set hydrocyclerunning back to false
+    

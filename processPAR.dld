@@ -1,0 +1,57 @@
+Public requestPAR as Boolean
+Dim parSum        as Float
+Dim parReadings   as Long
+Dim parMode       as Long
+Dim parStartTime  as Long
+Dim parSampleTime as Long
+
+Public PARvoltage As Float : Units PARvoltage = mV
+Public PARcalibrated As Float : Units PARcalibrated=umol/m2/s
+Public parStart As String *16
+DataTable (PAR, True, 1000)
+  'Sample(1,PARvoltage,Float)
+  Sample(1,PARcalibrated,Float)
+  Sample(1,parStart,String)
+EndTable
+
+Sub initPAR()
+  requestPAR=false
+  parStartTime=0
+  parSampleTime=120
+  parSum=0
+  parReadings=0
+  parMode=0
+  PARvoltage=0
+  PARcalibrated=0
+EndSub
+
+Sub processPAR()
+  Dim readVolts As Float
+
+  If requestPAR=true Then
+    requestPAR=false
+    debugMessage = "Taking PAR sensor reading" : Call Debug()
+    parMode=1
+    parStartTime=Status.Timestamp(0,0)
+    parStart=Status.Timestamp(0,1)
+    parSum=0
+    parReadings=0
+  EndIf
+  
+  If parMode=1 and Status.Timestamp(0,0)>parStartTime+parSampleTime Then parMode=2
+  
+  If parMode=1 Then
+    VoltSe(readVolts,1,mV5000,U2,True,0,50,1.0,0)
+    PARvoltage=readVolts
+    parSum=parSum+readVolts
+    parReadings=parReadings+1
+  EndIf
+  
+  If parMode=2 Then
+    PARvoltage = parSum / parReadings
+    PARcalibrated = PARvoltage * -100
+    CallTable PAR
+    debugMessage = "PAR sensor reading complete." : Call Debug()
+    parMode=0
+  EndIf
+EndSub

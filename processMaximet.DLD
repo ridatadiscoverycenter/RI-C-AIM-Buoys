@@ -1,0 +1,199 @@
+Dim metBuffer As String * NMEABufferSize
+
+Public gustWindSpeed As Float : Units gustWindSpeed = m/s
+Public gustWindDir As Float   : Units gustWindDir = deg
+Public avgWindSpeed As Float  : Units avgWindSpeed = m/s
+Public avgWindDir As Float    : Units avgWindDir = deg
+Public liveWindSpeed As Float : Units liveWindSpeed = m/s
+Public liveWindDir As Float   : Units liveWindDir = deg
+Public trueWindDirection As Boolean
+Public metdataStart As String *16 
+Dim wind_U_avg as Float
+Dim wind_V_avg As Float
+
+Dim wind_U_gust As Float
+Dim wind_V_gust As Float
+
+Public maximetTemperature As Float   : Units maximetTemperature = deg C
+Public maximetPressure As Float      : Units maximetPressure = mBar
+Public maximetHumidity As Float      : Units maximetHumidity = %
+Public maximetPrecipitation As Float : Units maximetPrecipitation = mm/hr
+Public maximetSolar As Float         : Units maximetSolar = W/m2
+Dim lastWSNAN As Boolean
+
+DataTable (MetData, True, 256)
+  Sample(1,avgWindSpeed,Float)
+  Sample(1,avgWindDir,Float)
+  Sample(1,gustWindSpeed,Float)
+  Sample(1,gustWindDir,Float)
+  Sample(1,maximetTemperature,Float)
+  Sample(1,maximetPressure,Float)
+  Sample(1,maximetHumidity,Float)
+  Sample(1,maximetPrecipitation,Float)
+  Sample(1,maximetSolar,Float)
+  Sample(1,metdataStart,String)
+EndTable
+
+'Maximet has the capability to provide GPS, so if enabled...
+#If enableMaximetGPS=true
+  Public Longitude As Float            : Units Longitude = deg (E)
+  Public Latitude As Float             : Units Latitude =  deg (N)
+  Public DOP As Float                  : Units DOP = m
+  Public Sats As Long
+  DataTable (GPSData,True,1000)
+    Sample(1,Latitude,Float)
+    Sample(1,Longitude,Float)
+    Sample(1,DOP,Float)
+    Sample(1,Sats,Float)
+    #If enableDriftAlarm = true
+      Sample(1,PositionDev,Float)
+      Sample(1,PosDevMetersEW, Float)
+      Sample(1,PosDevMetersNS, Float)
+    #EndIf
+  EndTable
+#EndIf
+    
+Sub initMaximet()
+  metBuffer=""
+  liveWindSpeed=0
+  liveWindDir=0
+  avgWindSpeed=0
+  avgWindDir=0
+  gustWindSpeed=0
+  gustWindDir=0
+  maximetTemperature=-40
+  maximetPressure=0 
+  maximetHumidity=0
+  maximetPrecipitation=0
+  maximetSolar=0
+  
+  #If enableMaximetGPS=true
+    Longitude=0
+    Latitude=90
+    DOP=99
+    Sats=0
+    #If enableDriftAlarm = true
+      initPositionReference()
+    #EndIf
+  #EndIf
+  
+  lastWSNAN=false
+
+  Call instConfig(maximetInst, maximetMode, false)
+  Call instPower(maximetInst, true)
+  SerialOpen(maximetPort,maximetBAUD,16,0,maximetHWBufferSize)
+End Sub
+
+Sub processMaximet()
+  Dim sentence As String * NMEASentenceSize
+  Dim msg As String * maximetHWBufferSize+1
+  Dim processed As Boolean
+  Dim ok As Long
+  Dim nBytes As Long
+  Dim rBytes As Long
+  
+  Dim u as Float
+  Dim v as Float
+  
+  Dim avgGustWindSpeed As Float
+  Dim avgGustWindDir As Float
+
+  Dim GPGGA(8) As Float  
+  Dim WIMWV(2) As Float
+  Dim WIXDR(5) As Float
+	
+  nBytes=SerialInChk(maximetPort)
+  If nBytes=0 Then ExitSub
+
+  rBytes=SerialInBlock(maximetPort, msg, nBytes)
+  msg(1,1,rBytes+1)=CHR(0)
+  metBuffer=metBuffer+msg
+  
+  #If debugMETinput=true
+    debugMessage="MET : "+msg
+    CallTable debug
+  #EndIf
+  
+  ok=0
+  While (ok<>2){
+    nmeaExtractSentence(metBuffer, sentence, ok)
+  
+    If ok=0 Then
+      #If debugMETinput=true
+        debugMessage="NMEA : "+sentence
+        CallTable debug
+      #EndIf
+     
+      #If enableMaximetGPS=true
+        Call nmeaGPGGA(GPGGA(),sentence, processed)
+        If processed=true Then
+          Longitude=GPGGA(7)
+          Latitude=GPGGA(8)
+          Sats=GPGGA(5)
+          DOP=GPGGA(6)
+          #If enableDriftAlarm = true
+            updatePositionReference(GPGGA(7), GPGGA(8), GPGGA(6))
+            calculateDrift(GPGGA(7), GPGGA(8), GPGGA(6))
+          #EndIf
+        EndIf
+      #EndIf        
+    
+      Call nmeaWIMWV(WIMWV(),sentence, processed, trueWindDirection)
+      If processed=true AND trueWindDirection=false AND lastWSNAN=True Then
+        If WIMWV(1)<60 Then
+          liveWindSpeed=WIMWV(1)
+        Else
+          liveWindSpeed=0
+        EndIf
+      EndIf
+      If processed=true AND trueWindDirection=true Then
+        lastWSNAN=true
+        If (WIMWV(1)<>NaN AND WIMWV(1)<60) Then
+          liveWindSpeed=WIMWV(1)
+          lastWSNAN=false
+        EndIf
+        liveWindDir=WIMWV(2)
+        
+        u = liveWindSpeed * sin( liveWindDir * pi/180 )
+        v = liveWindSpeed * cos( liveWindDir * pi/180 )
+
+        AvgRun(wind_U_avg, 1, u, 600) ' 10 minute averaging
+        AvgRun(wind_V_avg, 1, v, 600) ' 10 minute averaging
+        
+        AvgRun(wind_U_gust, 1, u, 3)  ' 3 second gust averaging
+        AvgRun(wind_V_gust, 1, v, 3)  ' 3 second gust averaging
+        
+        avgWindSpeed = sqr( pwr(wind_U_avg,2) + pwr(wind_V_avg,2) )
+        avgWindDir   = atn2(wind_U_avg, wind_V_avg) * 180./pi
+        if avgWindDir<0 Then avgWindDir=avgWindDir+360
+        
+        avgGustWindSpeed = sqr( pwr(wind_U_gust,2) + pwr(wind_V_gust,2) )
+        avgGustWindDir   = atn2(wind_U_gust, wind_V_gust) * 180./pi
+        if avgGustWindDir<0 Then avgGustWindDir=avgGustWindDir+360
+        
+        If (avgGustWindSpeed>gustWindSpeed) Then
+          gustWindSpeed=avgGustWindSpeed
+          gustWindDir=avgGustWindDir
+        EndIf
+      EndIf
+      
+      Call nmeaWIXDR(WIXDR(),sentence, processed)
+      If processed=true Then
+        maximetTemperature=WIXDR(1)
+        maximetPressure=WIXDR(2)
+        maximetHumidity=WIXDR(3)
+        maximetPrecipitation=WIXDR(4)
+        maximetSolar=WIXDR(5)
+      EndIf
+      
+    EndIf
+  Wend
+EndSub
+
+Sub storeWindData()
+  metdataStart=Status.Timestamp(0,1)
+  CallTable MetData
+  CallTable GPSData
+  gustWindSpeed=0
+  gustWindDir=0
+EndSub

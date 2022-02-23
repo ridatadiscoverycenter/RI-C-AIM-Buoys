@@ -1,0 +1,181 @@
+Public requestECO as Boolean
+Dim ecoBuffer      as String * 512
+
+'Dim parReadings   as Long
+Dim ecoStartTime  As Long
+Dim ecoSampleTime as Long
+Dim ecoStartupPause as Long
+Dim ecoShutdownPause As Long
+
+Public ecoStage As Float
+Public ecoSerial As String *16
+Public ecoStart As String *16
+Public ecoChannel(nEcoChans) As Float
+Public ecoFDOM As Float : Units ecoFDOM = ppb
+Alias ecoChannel(1) = ecoWavelength
+Alias ecoChannel(2) = ecoReadingRaw
+
+Dim ecoSum(nEcoChans) as Float
+Dim ecoNReadings(nEcoChans) as Long
+Dim ecoConverted As Float
+
+DataTable (ECO, True, 1000)
+  Sample(1,ecoSerial,String)
+  Sample(nEcoChans,ecoChannel,Float)
+  Sample(1,ecoFDOM,Float)
+  Sample(1,ecoStart,String)
+EndTable
+
+Sub initECO()
+  Dim i As long
+
+  requestECO=false
+  ecoStartTime=0
+  ecoSampleTime=120
+  ecoStartupPause=5
+  ecoShutdownPause=5
+  ecoConverted=0
+  ecoFDOM=0
+  ecoStage=0
+  For i=1 to nEcoChans
+    ecoChannel(i)=0
+    ecoSum(i)=0
+    ecoNReadings(i)=0
+  Next i
+
+  Call instConfig(ecoInst, ecoMode, false)
+  SerialOpen(ecoPort,ecoBAUD,16,0,ecoHWBufferSize)
+EndSub
+
+Sub processECO()
+  Dim nBytes As Long
+  Dim msg as String * ecoHWBufferSize
+  Dim lineEnd As Long
+  Dim lineData(nEcoChans+2) As String * 20
+  Dim i As long
+  Dim val AS Long
+  
+  If ecoStage=0 AND requestECO=true Then
+    requestECO=false
+    ecoStart=Status.Timestamp(0,1)
+    If Battery1Voltage > 12.5 Then
+    debugMessage = "Taking ECO-FL sensor reading" : Call Debug()
+    ecoStage=1
+  
+    For i=1 to nEcoChans
+      ecoChannel(i)=0
+      ecoSum(i)=0
+      ecoNReadings(i)=0
+    Next i
+ 
+    ecoStartTime=Status.Timestamp(0,0)
+    Call instPower(ecoInst, true)
+    Else 
+      ecoSerial="NAN"
+      ecoFDOM="NAN"
+      ecoWavelength="NAN"
+      ecoReadingRaw="NAN"
+      ecoChannel="NAN"
+    ecoStage=4
+    EndIf
+  EndIf
+  
+  If ecoStage=1 and Status.Timestamp(0,0)>ecoStartTime+ecoStartupPause Then
+    SerialOutBlock(ecoPort, "$run"+CHR(13)+CHR(10), 6)
+    ecoStartTime=Status.Timestamp(0,0)
+    ecoStage=2
+  EndIf
+  
+  If ecoStage=2 and Status.Timestamp(0,0)>ecoStartTime+ecoSampleTime Then
+        
+    SerialOutBlock(ecoPort, "!!!!!", 5)
+    ecoStartTime=Status.Timestamp(0,0)
+    ecoStage=3
+  EndIf
+  
+  If ecoStage=3 and Status.Timestamp(0,0)>ecoStartTime+ecoShutdownPause Then
+       For i=1 to nEcoChans
+      If ecoNReadings>0 Then
+        ecoChannel(i)=ecoSum(i)/ecoNReadings(i)
+      Else
+        ecoChannel(i)=0
+      EndIf
+    Next i
+       
+   If InStr(1, ecoSerial, "FLCDSB-5215", 2 )>0 Then
+          ecoConverted=((ecoReadingRaw*0.0304)+47)
+        EndIf
+        
+   If InStr(1, ecoSerial, "FLCDSB-5216", 2 )>0 Then
+          ecoConverted=((ecoReadingRaw*0.0304)+44)
+        EndIf 
+          
+   If InStr(1, ecoSerial, "FLCDSB-5360", 2 )>0 Then
+          ecoConverted=((ecoReadingRaw*0.0304)+47)
+        EndIf
+  ecoFDOM=ecoConverted
+  ecoStage=4 
+EndIf
+    
+If ecoStage=4
+    CallTable ECO
+    debugMessage = "Completed ECO-FL sensor reading" : Call Debug()
+    
+    Call instPower(ecoInst, false)
+    ecoStage=0
+  EndIf
+
+  If ecoStage>0 Then
+    nBytes=SerialInChk(ecoPort)
+    If nBytes=0 Then ExitSub
+  
+    SerialInBlock(ecoPort, msg, nBytes)
+    ecoBuffer=ecoBuffer+msg
+
+'    debugMessage="ECO Buffer : "+ecoBuffer : Call debug()
+
+    lineEnd=1
+    While (lineEnd>0)
+      lineEnd=InStr(1, ecoBuffer, CHR(10), 2 )
+      If lineEnd>0 Then
+'        debugMessage="Line end found at byte "+lineEnd : Call Debug()
+        msg=Left(ecoBuffer,lineEnd)
+        ecoBuffer=Right(ecoBuffer, Len(ecoBuffer)-lineEnd)
+        
+'        debugMessage="Message "+msg : Call Debug()
+'        debugMessage="Buffer  "+ecoBuffer : Call Debug()
+        
+        SplitStr(lineData, msg, CHR(9), nEcoChans+2, 5)
+        
+'        For i=1 to nEcoChans+2
+'          debugMessage="Line Data ("+i+") = "+lineData(i) : Call Debug()
+'        Next i
+
+        ' Handle info messages...
+        If InStr(1, lineData(1), "mvs 0", 2 )>0 Then
+          debugMessage="ECO Wiper Closed" : Call Debug()
+        EndIf
+        If InStr(1, lineData(1), "mvs 1", 2 )>0 Then
+          debugMessage="ECO Wiper Open" : Call Debug()
+        EndIf
+        
+        If InStr(1, lineData(1), "Ser", 2 )>0 Then
+          ecoSerial=Right(lineData(1), Len(lineData(1))-InStr(1, lineData(1), " ", 2 ))
+          debugMessage="ECO Serial Number : "+ecoSerial : Call Debug()
+        EndIf
+        
+        ' Handle data...
+        If ecoStage<3 Then
+          For i=1 to nEcoChans
+            ecoChannel(i)=lineData(i+2)
+            If ecoChannel(i)<>NAN Then
+              ecoSum(i)=ecoSum(i)+ecoChannel(i)
+              ecoNReadings(i)=ecoNReadings(i)+1
+            EndIf
+          Next i          
+        EndIf
+      EndIf
+    Wend
+    
+  EndIf
+EndSub
