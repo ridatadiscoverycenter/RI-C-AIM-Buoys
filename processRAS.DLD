@@ -8,10 +8,9 @@ Dim PPSStartTime As Long
 Dim PPSStartupTime As Long 
 Dim PPSSampleStart As Long 
 Dim PPSSampleInterval As Long
-
+Dim cmd As String * 32
 DataTable (RAS,1,500) 'Set table size to # of records, or -1 to autoallocate.
   Sample (1,EventString,String)
-  Sample
 EndTable
 
 Sub initRAS()
@@ -26,7 +25,7 @@ EndSub
 
 Sub processRAS()
   If PPSstage =0 AND requestPPS=True Then
-    If PPStage=1 AND Status.Timestamp(0,0)> PPSStartTime+PPSStartupTime Then
+    If PPSstage=1 AND Status.Timestamp(0,0)> PPSStartTime+PPSStartupTime Then
        If SerialOut(RASPort, "^C"+CRLF, "?", 5, 10)>0 Then
          If SerialOut(RASPort, "^C"+CRLF, "Enter", 5, 10)>0 Then
           If SerialOut(RASPort, "^C"+CRLF, ">", 5, 10)>0 Then
@@ -40,7 +39,7 @@ Sub processRAS()
   EndIf 
 
   
-If PPStage=1 AND Status.Timestamp(0,0)> PPSStartTime+PPSStartupTime Then
+If PPSstage=1 AND Status.Timestamp(0,0)> PPSStartTime+PPSStartupTime Then
    If SerialOut(RASPort, "HOME"+CRLF, "Port:00", 5, 300)>0 Then
         debugMessage= "Aligning to Home Port" : Call Debug()
         PPSstage=2
@@ -65,7 +64,7 @@ If PPSstage=2
        EndIf
      EndIf
   EndIf
-If PPSstage=3 Then 
+If PPSstage=3 AND PPSSampleCount<22 Then 
   PPSSampleStart=Status.Timestamp(0,0) 
   If SerialOut(RASPort, "sample"+CRLF, "Confirmed", 5, 1000)>0 Then '1st Sample of DNA/RNA duplicates'
     If SerialOut(RASPort, "sample"+CRLF, "Confirmed", 5, 1000)>0 Then '2nd Sample of DNA/RNA duplicates'
@@ -80,14 +79,17 @@ If PPSstage=3 Then
       EndIf
     EndIf
   EndIf
+EndIf
+If PPSstage=3 AND PPSSampleCount>22 Then
+   PPSstage=5 
 EndIf 
 
-ElseIf PPSstage=4 AND Status.Timestamp(0,0)> PPSSampleStart+PPSSampleInterval AND PPSSampleCount<22 Then PPSstage=3
-  Else PPSstage=5
+If PPSstage=4 AND Status.Timestamp(0,0)> PPSSampleStart+PPSSampleInterval Then 
+PPSstage=3
 EndIf 
 
 If PPSstage=5 Then
-   'close serial port??
+  debugMessage= "PPS Deployment Complete" : Call Debug()
    PPSstage=0 
 EndIf 
 'look at eco device file for sample numbebr loops ideas        
@@ -127,6 +129,7 @@ EndIf
   Dim Stringmarker3 As Long = 0
   Dim Stringmarker4 As Long = 0
   Dim Stringmarker5 As Long = 0
+  Dim Stringmarker6 As Long = 0
   Dim nbytes As Long
   Dim rbytes As Long
   
@@ -152,11 +155,15 @@ EndIf
       Stringmarker3 = InStr (1,Line,"Waiting",2)
       Stringmarker4 = InStr (1,Line,"FLUSH",2)
       Stringmarker5 = InStr (1,Line,"PUMPING",2)
+      Stringmarker6 = InStr (1,Line, "PUMPING SAMPLE",2)
       If Stringmarker1<>0 OR Stringmarker2<>0 OR Stringmarker3<>0 OR Stringmarker4<>0 OR Stringmarker5<>0 Then
         EventString=Line
         CallTable RAS 
       EndIf
     EndIf
+   If Stringmarker6<>0 Then 
+   PPSSampleCount=PPSSampleCount+Stringmarker6
+   EndIf
   Wend
 EndSub    
 

@@ -55,13 +55,13 @@ Const hydrocatMessageSize=500
 '*** Hydrocycle ***
 Const hydrocycleInst=4
 Const hydrocycleMode=0
-Const hydrocyclePort=COMU7
+Const hydrocyclePort=COMRS232
 Const hydrocycleBAUD=19200
 Const hydrocycleSWbuffersize=256
 Const hydrocycleHWbuffersize=512
 
 '*** RAS Sampler ***
-Const RASport=COMRS232
+Const RASport=COMU7
 Const RASbaud=9600
 Const RASSWbuffersize=256
 Const RASHWbuffersize=512
