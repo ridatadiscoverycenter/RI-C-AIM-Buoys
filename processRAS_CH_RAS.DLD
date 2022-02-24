@@ -1,0 +1,173 @@
+Dim RASSWbuffer As String * RASSWbuffersize
+'Dim RASexample As Long
+Dim EventString As String * RASSWBuffersize
+Public requestPPS As Boolean 
+Public PPSstage As Long
+Public PPSSampleCount As Long
+Dim PPSStartTime As Long
+Dim PPSStartupTime As Long 
+Dim PPSSampleStart As Long 
+Dim PPSSampleInterval As Long
+Dim cmd As String * 32
+DataTable (RAS,1,500) 'Set table size to # of records, or -1 to autoallocate.
+  Sample (1,EventString,String)
+EndTable
+
+Sub initRAS()
+  SerialOpen (RASPort,RASBAUD,16,0,RASHWbuffersize)
+  requestPPS=False
+  PPSstage=0 
+  PPSStartTime=0
+  PPSStartupTime=30 'in seconds
+  PPSSampleInterval=3600  'in seconds
+EndSub
+
+
+Sub processRAS()
+  If PPSstage =0 AND requestPPS=True Then
+    requestPPS=False
+    PPSStartTime=Status.Timestamp(0,0)
+    PPSstage=1 
+  EndIf
+  If PPSstage=1 AND Status.Timestamp(0,0)> PPSStartTime+PPSStartupTime Then
+      If SerialOut(RASPort, CHR(03), ">", 5, 10)>0 Then 
+      PPSstage=2
+      debugMessage= "Waking PPS" : Call Debug()
+      PPSStartTime=Status.Timestamp(0,0)
+      Else      
+         PPSstage=5 
+      EndIf
+  EndIf
+
+If PPSstage=2 AND Status.Timestamp(0,0)> PPSStartTime+PPSStartupTime Then
+    If SerialOut(RASPort, "HOME"+CRLF, "Confirmed", 5, 300)=0 Then PPSstage=5
+    debugMessage= "Aligning to Home Port" : Call Debug()
+    PPSstage=3
+EndIf 
+
+If PPSstage=2
+    cmd="set water 50"
+    If SerialOut(RASPort, cmd+CRLF, "Water", 5, 1000)=0 Then PPSstage=5
+    debugMessage= "Setting Water Flush Settings" : Call Debug()
+    cmd="set 100 75 50 0"
+    If SerialOut(RASPort, cmd+CRLF, "Sample", 5, 1000)=0 Then PPSstage=5
+    debugMessage= "Setting Sample Settings" : Call Debug()
+    cmd="set fixative 0"
+    If SerialOut(RASPort, cmd+CRLF, "Fixative", 5, 1000)=0 Then PPSstage=5
+    debugMessage= "Setting Fixative Flush Settings" : Call Debug()
+    If SerialOut(RASPort, "STARTDEPLOY"+CRLF, "Deployment", 5, 1000)=0 Then PPSstage=5
+    PPSstage=3
+    debugMessage= "Starting PPS Deployment" : Call Debug()
+EndIf
+
+If PPSstage=3 AND PPSSampleCount<22 Then 
+  PPSSampleStart=Status.Timestamp(0,0) 
+  If SerialOut(RASPort, "sample"+CRLF, "Confirmed", 5, 1000)=0 Then PPSstage=5 '1st Sample of DNA/RNA duplicates'
+  If SerialOut(RASPort, "sample"+CRLF, "Confirmed", 5, 1000)=0 Then PPSstage=5 '2nd Sample of DNA/RNA duplicates'
+  cmd="set fixative 0"' turn fixative flush to 0 for DA sample
+  If SerialOut(RASPort, cmd+CRLF, "Fixative", 5, 1000)=0 Then PPSstage=5
+  If SerialOut(RASPort, "sample"+CRLF, "Confirmed", 5, 1000)=0 Then PPSstage=5 'Sample for particulate DA
+  cmd="set fixative 0"' turn fixative flush volume back up for DNA/RNA Samples in next sample loop
+  If SerialOut(RASPort, cmd+CRLF, "Fixative", 5, 1000)=0 Then PPSstage=5
+  PPSstage=4
+EndIf
+
+If PPSstage=3 AND PPSSampleCount>22 Then
+   PPSstage=5 
+EndIf 
+
+If PPSstage=4 AND Status.Timestamp(0,0)> PPSSampleStart+PPSSampleInterval Then 
+  PPSstage=3
+EndIf 
+
+If PPSstage=5 Then
+  DebugMessage= "PPS Deployment Complete" : Call Debug()
+  PPSstage=0 
+EndIf 
+'look at eco device file for sample numbebr loops ideas        
+      
+
+
+ 
+'Move to first sample port -> wait for port change confirmation Then
+'Sample1 command-> (forward pump, x volume, x fixative) wait for finishing pumping output Then
+'Move to next sample port -> wait for port change confirmation Then
+'Sample2 command-> (forward pump, x volume, x fixative) wait for finishing pumping output Then
+'Move to next sample port -> wait for port change confirmation Then
+'Sample3 command-> (forward pump, x volume) wait for finishing pumping output
+ 
+'If Status.Timestamp > PPSampleStart+PPSSampleInterval Then 
+'PPSSampleStart=Status.Timestamp (0,0) 
+'Move to first sample port -> wait for port change confirmation Then
+'Sample1 command-> (forward pump, x volume, x fixative) wait for finishing pumping output Then
+'Move to next sample port -> wait for port change confirmation Then
+'Sample2 command-> (forward pump, x volume, x fixative) wait for finishing pumping output Then
+'Move to next sample port -> wait for port change confirmation Then
+'Sample3 command-> (forward pump, x volume) wait for finishing pumping output
+
+
+
+
+  Dim RAStempbuffer As String * RASSWbuffersize
+'  RASexample = FileOpen ("CPU:Testline1.txt","r",0)
+'  debugmessage="RASexample="+RASexample : Call Debug()
+'  FileRead (RASexample,RASSWbuffer,RASSWbuffersize)
+'  FileClose (RASexample)
+'  debugmessage="read from file="+RASSWbuffer : Call Debug()
+  Dim Line As String *100
+  Dim EOL As Long
+  Dim Stringmarker1 As Long = 0
+  Dim Stringmarker2 As Long = 0
+  Dim Stringmarker3 As Long = 0
+  Dim Stringmarker4 As Long = 0
+  Dim Stringmarker5 As Long = 0
+  Dim Stringmarker6 As Long = 0
+  Dim nbytes As Long
+  Dim rbytes As Long
+  
+  nbytes = SerialInChk (RASPort)
+  rbytes=SerialInBlock (RASPort,RAStempbuffer,nbytes)
+  If rbytes=0 Then ExitSub
+  RAStempbuffer(1,1,rbytes+1)=CHR(0)
+  
+  RASSWbuffer = RASSWbuffer&RAStempbuffer
+  debugmessage="RASSWbuffer - +"+rbytes+"bytes ="+RASSWbuffer : Call Debug()
+
+  EOL=1   
+  While (EOL>0)
+    EOL = InStr (1,RASSWbuffer,LF,2)
+    debugmessage="EOL="+EOL : Call Debug()
+    If EOL>0 Then
+      Line = Left (RASSWbuffer,EOL)
+      RASSWbuffer = Right (RASSWbuffer,Len(RASSWbuffer)-EOL)
+      debugmessage="Line="+Line : Call Debug()
+   
+      Stringmarker1 = InStr (1,Line,"starting",2)
+      Stringmarker2 = InStr (1,Line,"Result:",2)
+      Stringmarker3 = InStr (1,Line,"Waiting",2)
+      Stringmarker4 = InStr (1,Line,"FLUSH",2)
+      Stringmarker5 = InStr (1,Line,"PUMPING",2)
+      Stringmarker6 = InStr (1,Line, "PUMPING SAMPLE",2)
+      If Stringmarker1<>0 OR Stringmarker2<>0 OR Stringmarker3<>0 OR Stringmarker4<>0 OR Stringmarker5<>0 Then
+        EventString=Line
+        CallTable RAS 
+      EndIf
+    EndIf
+   If Stringmarker6<>0 Then 
+   PPSSampleCount=PPSSampleCount+Stringmarker6
+   EndIf
+  Wend
+EndSub    
+
+    
+    
+    
+    
+
+
+
+
+  
+
+
+

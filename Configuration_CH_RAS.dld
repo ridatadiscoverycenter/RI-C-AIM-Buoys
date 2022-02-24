@@ -31,8 +31,8 @@ Const debugMETdecode = false
 Const ecoInst=5
 Const ecoMode=0 'RS232
 Const ecoPort=ComU9
-Const ecoBAUD=9600
-Const ecoHWBufferSize=256
+Const ecoBAUD=19200
+Const ecoHWBufferSize=64
 Const nEcoChans=3
 
 '*** SUNA ***
@@ -52,17 +52,9 @@ Const hydrocatHWBufferSize = 512
 Const hydrocatSWBufferSize = 600
 Const hydrocatMessageSize=500
 
-'*** Hydrocycle ***
-Const hydrocycleInst=4
-Const hydrocycleMode=0
-Const hydrocyclePort=COMU7
-Const hydrocycleBAUD=19200
-Const hydrocycleSWbuffersize=256
-Const hydrocycleHWbuffersize=512
-
-'*** RAS Sampler ***
-Const RASport=COMRS232
-Const RASbaud=9600
+'*** PPS ***
+Const RASPort=COMU7
+Const RASBAUD=9600
 Const RASSWbuffersize=256
 Const RASHWbuffersize=512
 
