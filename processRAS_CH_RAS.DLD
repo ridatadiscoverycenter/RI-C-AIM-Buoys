@@ -17,7 +17,7 @@ Sub initRAS()
   SerialOpen (RASPort,RASBAUD,16,0,RASHWbuffersize)
   requestPPS=False
   PPSstage=0 
-  PPSStartTime=0
+  PPSStartTime=0 
   PPSStartupTime=30 'in seconds
   PPSSampleInterval=3600  'in seconds
 EndSub
@@ -62,11 +62,11 @@ EndIf
 
 If PPSstage=3 AND PPSSampleCount<22 Then 
   PPSSampleStart=Status.Timestamp(0,0) 
-  If SerialOut(RASPort, "sample"+CRLF, "Confirmed", 5, 1000)=0 Then PPSstage=5 '1st Sample of DNA/RNA duplicates'
-  If SerialOut(RASPort, "sample"+CRLF, "Confirmed", 5, 1000)=0 Then PPSstage=5 '2nd Sample of DNA/RNA duplicates'
+  If SerialOut(RASPort, "sample"+CRLF, "completed", 5, 180000)=0 Then PPSstage=5 '1st Sample of DNA/RNA duplicates'
+  If SerialOut(RASPort, "sample"+CRLF, "completed", 5, 180000)=0 Then PPSstage=5 '2nd Sample of DNA/RNA duplicates'
   cmd="set fixative 0"' turn fixative flush to 0 for DA sample
   If SerialOut(RASPort, cmd+CRLF, "Fixative", 5, 1000)=0 Then PPSstage=5
-  If SerialOut(RASPort, "sample"+CRLF, "Confirmed", 5, 1000)=0 Then PPSstage=5 'Sample for particulate DA
+  If SerialOut(RASPort, "sample"+CRLF, "completed", 5, 180000)=0 Then PPSstage=5 'Sample for particulate DA
   cmd="set fixative 0"' turn fixative flush volume back up for DNA/RNA Samples in next sample loop
   If SerialOut(RASPort, cmd+CRLF, "Fixative", 5, 1000)=0 Then PPSstage=5
   PPSstage=4
@@ -85,28 +85,6 @@ If PPSstage=5 Then
   PPSstage=0 
 EndIf 
 'look at eco device file for sample numbebr loops ideas        
-      
-
-
- 
-'Move to first sample port -> wait for port change confirmation Then
-'Sample1 command-> (forward pump, x volume, x fixative) wait for finishing pumping output Then
-'Move to next sample port -> wait for port change confirmation Then
-'Sample2 command-> (forward pump, x volume, x fixative) wait for finishing pumping output Then
-'Move to next sample port -> wait for port change confirmation Then
-'Sample3 command-> (forward pump, x volume) wait for finishing pumping output
- 
-'If Status.Timestamp > PPSampleStart+PPSSampleInterval Then 
-'PPSSampleStart=Status.Timestamp (0,0) 
-'Move to first sample port -> wait for port change confirmation Then
-'Sample1 command-> (forward pump, x volume, x fixative) wait for finishing pumping output Then
-'Move to next sample port -> wait for port change confirmation Then
-'Sample2 command-> (forward pump, x volume, x fixative) wait for finishing pumping output Then
-'Move to next sample port -> wait for port change confirmation Then
-'Sample3 command-> (forward pump, x volume) wait for finishing pumping output
-
-
-
 
   Dim RAStempbuffer As String * RASSWbuffersize
 '  RASexample = FileOpen ("CPU:Testline1.txt","r",0)
