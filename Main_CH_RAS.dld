@@ -26,7 +26,7 @@ Include "CPU:processPAR.DLD"
 Include "CPU:processECO.DLD"
 Include "CPU:processSUNA.DLD"
 Include "CPU:processHydrocat.DLD"
-Include "CPU:processRAS.DLD"
+Include "CPU:processRAS_CH_RAS.DLD"
 
 Dim driftAlarm As Boolean
 

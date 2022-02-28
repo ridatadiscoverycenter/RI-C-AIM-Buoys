@@ -18,7 +18,8 @@ Sub initRAS()
   requestPPS=False
   PPSstage=0 
   PPSStartTime=0 
-  PPSStartupTime=30 'in seconds
+  PPSSampleCount=1
+  PPSStartupTime=10 'in seconds
   PPSSampleInterval=3600  'in seconds
 EndSub
 
@@ -27,61 +28,78 @@ Sub processRAS()
   If PPSstage =0 AND requestPPS=True Then
     requestPPS=False
     PPSStartTime=Status.Timestamp(0,0)
+    debugMessage= "Initalizaing PPS" : Call Debug()
     PPSstage=1 
   EndIf
-  If PPSstage=1 AND Status.Timestamp(0,0)> PPSStartTime+PPSStartupTime Then
-      If SerialOut(RASPort, CHR(03), ">", 5, 10)>0 Then 
-      PPSstage=2
+  If PPSstage=1 Then
       debugMessage= "Waking PPS" : Call Debug()
+      If SerialOut(RASPort, CHR(03), "WTS", 5, 200)=0 Then PPSstage=6
+      PPSstage=2
       PPSStartTime=Status.Timestamp(0,0)
-      Else      
-         PPSstage=5 
-      EndIf
   EndIf
 
-If PPSstage=2 AND Status.Timestamp(0,0)> PPSStartTime+PPSStartupTime Then
-    If SerialOut(RASPort, "HOME"+CRLF, "Confirmed", 5, 300)=0 Then PPSstage=5
+If PPSstage=2 Then
     debugMessage= "Aligning to Home Port" : Call Debug()
+    If SerialOut(RASPort, "HOME"+CRLF, "home port", 5, 6000)=0 Then PPSstage=6
     PPSstage=3
 EndIf 
 
-If PPSstage=2
+If PPSstage=3
+    debugMessage= "Setting PPS Sample Parameters" : Call Debug()
     cmd="set water 50"
-    If SerialOut(RASPort, cmd+CRLF, "Water", 5, 1000)=0 Then PPSstage=5
+    If SerialOut(RASPort, cmd+CRLF, "Water", 5, 1000)=0 Then PPSstage=6
     debugMessage= "Setting Water Flush Settings" : Call Debug()
-    cmd="set 100 75 50 0"
-    If SerialOut(RASPort, cmd+CRLF, "Sample", 5, 1000)=0 Then PPSstage=5
+    cmd="set sample 100 75 50 0"
+    If SerialOut(RASPort, cmd+CRLF, "Sample", 5, 1000)=0 Then PPSstage=6
     debugMessage= "Setting Sample Settings" : Call Debug()
-    cmd="set fixative 0"
-    If SerialOut(RASPort, cmd+CRLF, "Fixative", 5, 1000)=0 Then PPSstage=5
+    cmd="set fixative 10"
+    If SerialOut(RASPort, cmd+CRLF, "Fixative", 5, 1000)=0 Then PPSstage=6
     debugMessage= "Setting Fixative Flush Settings" : Call Debug()
-    If SerialOut(RASPort, "STARTDEPLOY"+CRLF, "Deployment", 5, 1000)=0 Then PPSstage=5
-    PPSstage=3
+    If SerialOut(RASPort, "START_DEPLOY"+CRLF, "Deployment", 5, 1000)=0 Then PPSstage=6
+    PPSstage=4
     debugMessage= "Starting PPS Deployment" : Call Debug()
 EndIf
 
-If PPSstage=3 AND PPSSampleCount<22 Then 
-  PPSSampleStart=Status.Timestamp(0,0) 
-  If SerialOut(RASPort, "sample"+CRLF, "completed", 5, 180000)=0 Then PPSstage=5 '1st Sample of DNA/RNA duplicates'
-  If SerialOut(RASPort, "sample"+CRLF, "completed", 5, 180000)=0 Then PPSstage=5 '2nd Sample of DNA/RNA duplicates'
+If PPSstage=4 AND PPSSampleCount<22 Then 
+  PPSSampleStart=Status.Timestamp(0,0)
+  If SerialOut(RASPort, CHR(03), "WTS", 5, 200)=0 Then PPSstage=6
+  debugMessage= "Starting PPS Sampling" : Call Debug()
+  debugMessage= "Starting 1st Sample" : Call Debug()
+  If SerialOut(RASPort, "sample"+CRLF, "completed", 5, 180000)=0 Then PPSstage=6 '1st Sample of DNA/RNA duplicates'
+  debugMessage= "Waking PPS" : Call Debug()
+  If SerialOut(RASPort, CHR(03), "WTS", 5, 200)=0 Then PPSstage=6
+  debugMessage= "Taking 2nd Sample" : Call Debug()
+  If SerialOut(RASPort, "sample"+CRLF, "completed", 5, 180000)=0 Then PPSstage=6 '2nd Sample of DNA/RNA duplicates'
+  debugMessage= "Waking PPS" : Call Debug()
+  If SerialOut(RASPort, CHR(03), "WTS", 5, 200)=0 Then PPSstage=6
+  debugMessage= "Turning Fixative Valve Off" : Call Debug()
+  If SerialOut(RASPort, CHR(03), "WTS", 5, 200)=0 Then PPSstage=6 'Makes sure the PPS prompt is ready for sample start
   cmd="set fixative 0"' turn fixative flush to 0 for DA sample
-  If SerialOut(RASPort, cmd+CRLF, "Fixative", 5, 1000)=0 Then PPSstage=5
-  If SerialOut(RASPort, "sample"+CRLF, "completed", 5, 180000)=0 Then PPSstage=5 'Sample for particulate DA
-  cmd="set fixative 0"' turn fixative flush volume back up for DNA/RNA Samples in next sample loop
-  If SerialOut(RASPort, cmd+CRLF, "Fixative", 5, 1000)=0 Then PPSstage=5
-  PPSstage=4
+  If SerialOut(RASPort, cmd+CRLF, "Fixative", 5, 1000)=0 Then PPSstage=6
+  debugMessage= "Taking 3rd Sample" : Call Debug()
+  If SerialOut(RASPort, "sample"+CRLF, "completed", 5, 180000)=0 Then PPSstage=6 'Sample for particulate DA
+  debugMessage= "Waking PPS" : Call Debug()
+  If SerialOut(RASPort, CHR(03), "WTS", 5, 200)=0 Then PPSstage=6
+  debugMessage= "Turning Fixative Valve On" : Call Debug()
+  cmd="set fixative 10"' turn fixative flush volume back up for DNA/RNA Samples in next sample loop
+  If SerialOut(RASPort, cmd+CRLF, "Fixative", 5, 1000)=0 Then PPSstage=6
+  If SerialOut(RASPort, CHR(03), "WTS", 5, 200)=0 Then PPSstage=6 'Makes sure the PPS prompt is ready for sleep command
+  SerialOut(RASPort, "sleep", "Suspended", 5, 150)
+  PPSstage=5
 EndIf
 
-If PPSstage=3 AND PPSSampleCount>22 Then
-   PPSstage=5 
+If PPSstage=4 AND PPSSampleCount>22 Then
+   PPSstage=6 
 EndIf 
 
-If PPSstage=4 AND Status.Timestamp(0,0)> PPSSampleStart+PPSSampleInterval Then 
-  PPSstage=3
+If PPSstage=5 AND Status.Timestamp(0,0)> PPSSampleStart+PPSSampleInterval Then 
+  PPSstage=4
 EndIf 
 
-If PPSstage=5 Then
+If PPSstage=6 Then
   DebugMessage= "PPS Deployment Complete" : Call Debug()
+  SerialOut(RASPort, "sleep", "Suspended", 5, 150)
+  DebugMessage= "Putting PPS to Sleep" : Call Debug()
   PPSstage=0 
 EndIf 
 'look at eco device file for sample numbebr loops ideas        
@@ -125,15 +143,15 @@ EndIf
       Stringmarker3 = InStr (1,Line,"Waiting",2)
       Stringmarker4 = InStr (1,Line,"FLUSH",2)
       Stringmarker5 = InStr (1,Line,"PUMPING",2)
-      Stringmarker6 = InStr (1,Line, "PUMPING SAMPLE",2)
+      Stringmarker6 = InStr (1,Line,"completed",2)
+      If Stringmarker6<>0 Then 
+         PPSSampleCount=PPSSampleCount+Stringmarker6
+       EndIf
       If Stringmarker1<>0 OR Stringmarker2<>0 OR Stringmarker3<>0 OR Stringmarker4<>0 OR Stringmarker5<>0 Then
         EventString=Line
         CallTable RAS 
       EndIf
     EndIf
-   If Stringmarker6<>0 Then 
-   PPSSampleCount=PPSSampleCount+Stringmarker6
-   EndIf
   Wend
 EndSub    
 

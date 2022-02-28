@@ -1,0 +1,188 @@
+sample
+
+05/17/1971 19:18:19 Event 4
+
+ Water Flush:
+ Volume          [ml]      = 50
+ Flow rate       [ml/min]  = 100
+ Min. flow rate  [ml/min]  = 50
+ Time limit      [minutes] = 2
+
+
+____________________
+
+FLUSHING INTAKE PORT
+____________________
+
+
+  Pump   | Hall      | Average   |  Volume    |    Flow     |  Elapsed   |  Batt.  |  Pump   |
+  Drive  | Hz        | Hall Hz   |  Pumped    |    Rate     |  Seconds   | Voltage | Current |
+   1600 h    134 I_Hz     33 A_Hz       0.9 ml   56.0 ml/min        1 sec    36.8 V     78 mA 
+   1810 h    223 I_Hz     89 A_Hz       2.5 ml   93.2 ml/min        2 sec    36.8 V     82 mA 
+   1843 h    245 I_Hz    150 A_Hz       4.2 ml  102.4 ml/min        3 sec    36.8 V     77 mA 
+   1831 h    242 I_Hz    211 A_Hz       5.9 ml  101.2 ml/min        4 sec  r    75 mA 
+   1826 h    239 I_Hz    237 A_Hz       7.5 ml   99.9 ml/min        5 sec    36.8 V     68 mA 
+   1826 h    240 I_Hz    241 A_Hz       9.2 ml  100.3 ml/min        6 sec    36.8 V     79 mA 
+   1825 h    239 I_Hz    240 A_Hz      10.9 ml   99.9 ml/min        7 sec    36.7 V     74 mA 
+   1825 h    239 I_Hz    239 A_Hz      12.6 ml   99.9 ml/min        8 sec    36.7 V     75 mA 
+   1825 h    239 I_Hz    239 A_Hz      14.2 ml   99.9 ml/min        9 sec    36.7 V     74 mA 
+   1826 h    239 I_Hz    239 A_Hz      15.9 ml   99.9 ml/min       10 sec    36.7 V     72 mA 
+   1826 h    239 I_Hz    239 A_Hz      17.5 ml   99.9 ml/min       11 sec    36.7 V     76 mA 
+   1827 h    240 I_Hz    239 A_Hz      19.2 ml  100.3 ml/min       12 sec    36.7 V     74 mA 
+   1825 h    239 I_Hz    239 A_Hz      20.9 ml   99.9 ml/min       13 sec    36.7 V     69 mA 
+   1826 h    239 I_Hz    239 A_Hz      22.6 ml   99.9 ml/min       14 sec    36.7 V     70 mA 
+   1826 h    240 I_Hz    239 A_Hz      24.2 ml  100.3 ml/min       15 sec    36.7 V     79 mA 
+   1824 h    238 I_Hz    239 A_Hz      25.9 ml   99.5 ml/min       16 sec    36.7 V     74 mA 
+   1827 h    240 I_Hz    239 A_Hz      27.6 ml  100.3 ml/min       17 sec    36.6 V     74 mA    1825 h    239 I_Hz    239 A_Hz      29.2 ml   99.9 ml/min       18 sec    36.7 V     69 mA 
+   1826 h    239 I_Hz    239 A_Hz      30.9 ml   99.9 ml/min       19 sec    36.7 V     79 mA 
+   1826 h    240 I_Hz    239 A_Hz      32.6 ml  100.3 ml/min       20 sec    36.6 V     72 mA 
+   1825 h    239 I_Hz    239 A_Hz      34.2 ml   99.9 ml/min       21 sec    36.7 V     75 mA 
+   1825 h    239 I_Hz    239 A_Hz      35.9 ml   99.9 ml/min       22 sec    36.7 V     76 mA    1825 h    239 I_Hz    239 A_Hz      37.6 ml   99.9 ml/min       23 sec    36.7 V     73 mA 
+   1826 h    239 I_Hz    239 A_Hz      39.2 ml   99.9 ml/min       24 sec    36.6 V     72 mA 
+   1826 h    239 I_Hz    239 A_Hz      40.9 ml   99.9 ml/min       25 sec    36.7 V     82 mA 
+   1827 h    240 I_Hz    239 A_Hz     42.6 ml  100.3 ml/min       26 sec    36.6 V     76 mA 
+   1825 h    239 I_Hz    239 A_Hz      44.2 ml   99.9 ml/min       27 sec    36.7 V     76 mA 
+   1826 h    239 I_Hz  }!     45.9 ml   99.9 ml/min       28 sec    36.7 V     74 mA 
+   1826 h    240 I_Hz    239 A_Hz      47.6 ml  100.3 ml/min       29 sec    36.6 V     76 mA 
+   1824 h    239 I_Hz    239 A_Hz      49.2 ml   99.9 ml/min       30 sec    36.7 V     72 mA 
+
+
+Result:             Vreached
+Elapsed Seconds:    31
+Volume:             50 ml
+Lowest Flow Rate:   99.5 ml
+Average Current:    74.0 mA
+Highest Current:    82.0 mA
+Lowest BaW     36.6 V
+
+
+Seeking port 04.... located. Aligning... Confirmed.
+
+
+ Sample:
+ Volume          [ml]      = 100
+ Flow rate       [ml/min]  = 75
+ Min. flow rate  [ml/min]  = 50
+ Time limit      [minutes] = 3
+
+
+______________
+PUMPING SAMPLE
+______________
+
+
+  Pump    Hall      | Average   |  Volume    |    Flow     |  Elapsed    Batt.  |  Pump   |
+  Drive  | Hz        | Hall Hz   |  Pumped    |    Rate     |  Seconds   | Voltage | Current |
+   1600 h    134 I_Hz     33 A_Hz      0.9 ml   56.0 ml/min       36.6 V     51 mA    1691 h    181 I_Hz     78 A_Hz       2.2 ml   7jmin        2 sec    36.6 V     50 mA 
+   1688 h    187 I_Hz    125 A_Hz       3.5 ml   78.2 ml/min        3 sec    36.6 V     48 mA 
+   1672 h    181 I_Hz    170 A_Hz       4.8 ml   75.7 ml/min        4 sec    36.6 V     48 mA 
+   1669 h    179 I_Hz    182 A_Hz       6.0 ml   74.8 ml/min        5 sec    36.6 V     52 mA 
+   1670 h    179 I_Hz    181 A_Hz       7.3 ml   74.8 ml/min        6 sec    36.6 V     50 mA 
+   1671 h    179 I_Hz    179 A_Hz       8.5 ml   74.8 ml/min        7 sec    36.6 V     50 mA 
+   1671 h    179 I_Hz    179 A_Hz       9.7 ml   74.8 ml/min        8 sec    36.6 V     47 mA 
+   1672 h    180 I_Hz    179 A_Hz      1j  75.3jmin        9 sec    36.6 V     46 mA 
+   1671 h    179 I_Hz    179 A_Hz      12.3 ml   74.8 ml/min       10 sec    36.6 V     48 mA 
+   1672 h    179 I_Hz    179 A_Hz      13.5 ml   74.8 ml/min       11 sec    36.6 V     51 mA 
+   1673 h    181 I_Hz    179 A_Hz      14.8 ml   75.7 ml/min       12 sec    36.7 V     50 mA 
+   1669 h    179 I_Hz    179 A_Hz      16.0 ml   74.8 ml/min       13 sec    36.6 V     49 mA    1670 h    180 I_Hz    179 A_Hz      17.3 ml   75.3 ml/min       14 sec    36.6 V     45 mA 
+   1669 h    179 I_Hz    179 A_Hz      18j  74.8 ml/[      15 sec    36.7 V     44 mA 
+   1670 h    179 I_Hz    179 A_Hz      19.8 ml   74.8 ml/min       16 sec    36.7 V     48 mA 
+   1670 h    179 I_Hz    179 A_Hz      21.0 ml   74.8 m+      17 sec    36.7 V     46 mA 
+   1671 h    175 I_Hz    178 A_Hz      22.2 ml   73.2 ml/min       18 sec    36.6 V     47 mA 
+   1680 h    177 I_Hz    177 A_Hz      23.5 ml   74.0 ml/min       19 sec    36.7 V     53 mA 
+   1685 h    180 I_Hz    177 A_Hz  rj  75.3 ml/min       20 sec    36.6 V     53 mA 
+   1684 h    179 I_Hz    177 A_Hz      26.0 ml   74.8 ml/min       21 sec    36.6 V     51 mA 
+   1684 h    180 I_Hz    179 A_Hz      27.2 ml   75.3 ml/min       22 sec    36.6 V     52 mA 
+   1683 h    179 I_Hz    179 A_Hz      28.5 ml   74.8 ml/min       23 sec    36.7 V     58 mA 
+   1684 h    179 I_Hz    179 A_Hz      29.7 ml   74.8 ml/min       24 sec    36.6 V     56 mA 
+   1685 h    182 I_Hz    180 A_Hz      31.0 ml   76.1 ml/min       25 sec    36.6 V     51 mA 
+   1680 h    180 I_Hz    180 A_Hz      32.2 ml   75.3 ml/min       26 sec    36.7 V     56 mA 
+   1678 h    178 I_Hz  }!     33.5 ml   74.4 ml/min       27 sec    36.7 V     51 mA 
+   1681 h    180 I_Hz    180 A_Hz      34.7 ml   75.3 ml/min       28 sec    36.6 V     47 mA 
+   1680 h    179 I_Hz    179 A_Hz      36.0 m  74.8 ml/min       29 sec    36.6 V     50 mA 
+   1681 h    180 I_Hz    179 A_Hz      37.2 ml   75.3 ml/min       30 sec    36.7 V     49 mA 
+   1679 h    178 I_Hz    179 A_Hz      38.5 ml   74.4 ml/min       31 sec    36.6 V     49 mA 
+   1682 h    179 I_Hz    179 A_Hz      39.7 ml   74.8 ml/min       32 sec    36.6 V     53 mA 
+   1683 h    178 I_Hz    178 A_Hz      41.0 ml   74.4 ml/min       33 sec    36.7 V     50 mA 
+   1686 h    180 I_Hz    178 A_Hz      42.2 ml   75.3 ml/min       34 sec    36.6 V     j
+   1685 h    180 I_Hz    179 A_Hz      43.5 ml   75.3 ml/min       35 sec    36.7 V     49 mA 
+   1683 h    181 I_Hz    179 A_Hz      44.7 ml   75.7 ml/min       36 sec    36.7 V     49 mA 
+   1680 h    179 I_Hz    180 A_Hz      46.0 ml   74.8 ml/min       37 sec    36.7 V     49 mA 
+   1681 h    179 I_Hz    179 A_Hz      47.2 ml   74.8 ml/min       38 sec    36.7 V     50 mA 
+   1682 h    179 I_Hz    179 A_Hz      48.5 ml   74.8 ml/min       39 sec    36.7 V     51 mA 
+   1683 h    181 I_Hz    179 A_Hz      49.7 ml   75.7 ml/min       40 sec    36.7 V     54 mA 
+   1679 h    179 I_Hz    179 A_Hz    rj  74.8 ml/min       41 sec    36.7 V     53 mA 
+   1680 h    179 I_Hz    179 A_Hz      52.2 ml   74.8 ml/min       42 sec    36.6 V     53 mA 
+   1681 h    180 I_Hz    179 A_Hz      53.5 ml   75.3 ml/min       43 sec    36.7 V     49 mA 
+   1680 h    180 I_Hz    179 A_Hz      54.7 ml   75.3 ml/min       44 sec    36.7 V     50 mA 
+   1678 h    180 I_Hz    179 A_Hz      56.0 ml   75.3 ml/min       45 sec    36.7 V     56 mA 
+   1677 h    179 I_Hz    179 A_Hz      57.2 ml   74.8 ml/min       46 sec    36.6 V     48 mA 
+   1678 h    180 I_Hz    179 A_H     58.5 ml   75.3 ml/min       47 sec    36.6 V     48 mA 
+   1677 h    180 I_Hz    179 A_Hz      59.7 ml   75.3 ml/min       48 sec    36.6 V     50 mA 
+   1676 h    180 I_Hz    179 A_Hz      61.0 ml   75.3 ml/min       49 sec    36.7 V     55 mA 
+   1674 h    179 I_Hz    179 A_Hz      62.2 ml   74.8 ml/min       50 sec    36.6 V     48 mA 
+   167B   179 I_Hz    179 A_Hz      63.5 ml   74.8 ml/min       51 sec    36.7 V     51 mA 
+   1676 h    180 I_Hz    179 A_Hz      64.7 ml   75.3 ml/min       52 sec    36.6 V     48 mA 
+   1675 h    179}!   179 A_Hz      66.0 ml   74.8 ml/min       53 sec    36.7 V     50 mA 
+   1675 h    178 I_Hz    179 A_Hz      67.2 ml   74.4 ml/min       54 sec    36.6 V     48 mA 
+   1678 h    179 I_Hz    179 A_Hz      68.5 ml   74.8 ml/min       55 sec    36.7 V     51 mA 
+   1679 h    180 I_Hz    179 A_Hz      69.7 ml   75.3 ml/min       56 sec    36.6 V     48 mA 
+   1678 h    179 I_Hz    179 A_Hz      71.0 ml   74.8 ml/min       57 sec    36.7 V     48 mA 
+   1679 h    179 I_Hz    179 A_Hz      72.2 ml   74.8 ml/min       58 sec    36.6 V     45 mA 
+   1679 h    179 I_Hz    179 A_Hz      73.5 ml   74.8 ml/min       59 sec    36.7 V     52 mA 
+   1680 h    179 I_Hz    179 A_Hz      74.7 ml   74.8 ml/min       60 sec    36.6 V     57 mA 
+   1681 h    180 I_Hz    179 A_Hz      76.0 ml   75.3 ml/min       61 sec    36.7 V     48 mA 
+   1680 h    179 I_Hz    179 A_Hz      77.2 ml   74.8 ml/min       62 sec    36.7 V     49 mA 
+   1680 h    180 I_Hz    179 A_Hz      78.5 ml   75.3 ml/min       63 sec    36.7 V     45 mA 
+   1679 h    179 I_Hz    179 A_Hz      79.7 ml   74.8 ml/min       64 sec    36.7 V     49 mA 
+   1680 h    179 I_Hz    179 A_Hz      81.0 ml   74.8 ml/min       65 sec    36.7 V     51 mA 
+   1681 h    180 I_Hz    179 A_Hz      82.2 ml   75.3 ml/min       66 sec    36.7 V     51 mA 
+   1680 h    179 I_Hz    179 A_Hz      83.5 ml   74.8 ml/min       67 sec    36.6 V     51 mA 
+   1680 h    179 I_Hz    179 A_Hz      84.7 ml   74.8 ml/min       68 sec    36.7 V     51 mA 
+   1681 h    180 I_Hz    179 A_Hz      86.0 ml   75.3 ml/min       69 sec    36.7 V     51 mA 
+   1680 h    179 I_Hz    179 A_Hz      87.2 ml   74.8 ml/min       70 sec    36.7 V     50 mA 
+   1681 h    179 I_Hz    179 A_Hz      88.5 ml   74.8 ml/min       71 sec    36.7 V     54 mA 
+   1682 h    180 I_Hz    179 A_Hz      89.7 ml   75.3 ml/min       72 sec    36.7 V     52 mA 
+   1680 h    180 I_Hz    179 A_Hz      91.0 ml   75.3 ml/min       73 sec    36.6 V     52 mA 
+   1679 h    179 I_Hz    179 A_Hz      92.2 ml   74.8 ml/min       74 sec    36.6 V     51 mA 
+   1680 h    179 I_Hz    179 A_Hz      93.5 ml   74.8 ml/min       75 sec    36.7 V     51 mA 
+   1681 h    179 I_Hz    179 A_Hz      94.7 ml   74.8 ml/min       76 sec    36.6 V     50 mA 
+   1681 h    180 I_Hz    179 A_Hz      96.0 ml   75.3 ml/min       77 sec    36.7 V     55 mA 
+   1680 h    179 I_Hz    179 A_Hz      97.2 ml   74.8 ml/min       78 sec    36.6 V     51 mA 
+   1681 h    179 I_Hz    179 A_Hz      98.5 ml   74.8 ml/min       79 sec    36.6 V     54 mA 
+   1682 h    180 I_Hz    179 A_Hz      99.7 ml   75.3 ml/min       80 sec    36.7 V     50 mA 
+
+
+Result:             Volume reached
+Elapsed Seconds:    81
+Volume:             100 ml
+Lowest Flow Rate:   73.2 ml
+Average Current:    50.0 mA
+Highest Current:    58.0 mA
+Lowest Battery:     36.6 V
+
+
+30 second pause to reduce pressure differentZ
+05/17/1971 19:20:39 Suspended until 05/17/1971 19:21:09 ...  Awake
+
+Seeking port 01... located. Aligning... Confirmed.
+
+Seeking home port. Located. Aligning... Confirmed.
+Event 4 completed.
+
+
+05/17/1971 19:21:39 Suspended ... ?
+0Mz Suspended ... ?
+Enter ^C now to wake up ...  [^C]
+
+
+05/17/1971 19:22:41 WTS 14615-03>stop_deploy
+
+
+Command-line deployment ended.
+
+
+05/17/1971 19:22:46 WTS 14615-03>sleep
+
+
+05/17/1971 19:22:52 Suspended ... 
