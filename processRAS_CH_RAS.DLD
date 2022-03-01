@@ -64,28 +64,30 @@ If PPSstage=4 AND PPSSampleCount<22 Then
   PPSSampleStart=Status.Timestamp(0,0)
   If SerialOut(RASPort, CHR(03), "WTS", 5, 200)=0 Then PPSstage=6
   debugMessage= "Starting PPS Sampling" : Call Debug()
-  debugMessage= "Starting 1st Sample" : Call Debug()
-  If SerialOut(RASPort, "sample"+CRLF, "completed", 5, 180000)=0 Then PPSstage=6 '1st Sample of DNA/RNA duplicates'
+  debugMessage= "Taking 1st Sample" : Call Debug()
+  If SerialOut(RASPort, "sample"+CRLF, "completed", 5, 90000)=0 Then PPSstage=6 '1st Sample of DNA/RNA duplicates'
   debugMessage= "Waking PPS" : Call Debug()
   If SerialOut(RASPort, CHR(03), "WTS", 5, 200)=0 Then PPSstage=6
   debugMessage= "Taking 2nd Sample" : Call Debug()
-  If SerialOut(RASPort, "sample"+CRLF, "completed", 5, 180000)=0 Then PPSstage=6 '2nd Sample of DNA/RNA duplicates'
+  If SerialOut(RASPort, "sample"+CRLF, "completed", 5, 90000)=0 Then PPSstage=6 '2nd Sample of DNA/RNA duplicates'
   debugMessage= "Waking PPS" : Call Debug()
   If SerialOut(RASPort, CHR(03), "WTS", 5, 200)=0 Then PPSstage=6
   debugMessage= "Turning Fixative Valve Off" : Call Debug()
-  If SerialOut(RASPort, CHR(03), "WTS", 5, 200)=0 Then PPSstage=6 'Makes sure the PPS prompt is ready for sample start
   cmd="set fixative 0"' turn fixative flush to 0 for DA sample
   If SerialOut(RASPort, cmd+CRLF, "Fixative", 5, 1000)=0 Then PPSstage=6
+  If SerialOut(RASPort, CHR(03), "WTS", 5, 200)=0 Then PPSstage=6 'Makes sure the PPS prompt is ready for  the 3rd sample start
   debugMessage= "Taking 3rd Sample" : Call Debug()
-  If SerialOut(RASPort, "sample"+CRLF, "completed", 5, 180000)=0 Then PPSstage=6 'Sample for particulate DA
+  If SerialOut(RASPort, "sample"+CRLF, "completed", 5, 90000)=0 Then PPSstage=6 'Sample for particulate DA
   debugMessage= "Waking PPS" : Call Debug()
   If SerialOut(RASPort, CHR(03), "WTS", 5, 200)=0 Then PPSstage=6
   debugMessage= "Turning Fixative Valve On" : Call Debug()
   cmd="set fixative 10"' turn fixative flush volume back up for DNA/RNA Samples in next sample loop
   If SerialOut(RASPort, cmd+CRLF, "Fixative", 5, 1000)=0 Then PPSstage=6
   If SerialOut(RASPort, CHR(03), "WTS", 5, 200)=0 Then PPSstage=6 'Makes sure the PPS prompt is ready for sleep command
-  SerialOut(RASPort, "sleep", "Suspended", 5, 150)
+  debugMessage= "Putting PPS to Sleep" : Call Debug()
+  SerialOut(RASPort, "sleep", "Suspended", 5, 10000)
   PPSstage=5
+  debugMessage= "PPS Waiting for Next Sampling Period" : Call Debug()
 EndIf
 
 If PPSstage=4 AND PPSSampleCount>22 Then
@@ -110,8 +112,8 @@ EndIf
 '  FileRead (RASexample,RASSWbuffer,RASSWbuffersize)
 '  FileClose (RASexample)
 '  debugmessage="read from file="+RASSWbuffer : Call Debug()
-  Dim Line As String *100
-  Dim EOL As Long
+  Public Line As String *100
+  Public EOL As Long
   Dim Stringmarker1 As Long = 0
   Dim Stringmarker2 As Long = 0
   Dim Stringmarker3 As Long = 0
@@ -131,11 +133,11 @@ EndIf
 
   EOL=1   
   While (EOL>0)
-    EOL = InStr (1,RASSWbuffer,LF,2)
+    EOL = InStr (1,RASSWbuffer,CHR(10),2)
     debugmessage="EOL="+EOL : Call Debug()
     If EOL>0 Then
-      Line = Left (RASSWbuffer,EOL)
-      RASSWbuffer = Right (RASSWbuffer,Len(RASSWbuffer)-EOL)
+      Line = Left(RASSWbuffer,EOL)
+      RASSWbuffer = Right(RASSWbuffer,Len(RASSWbuffer)-EOL)
       debugmessage="Line="+Line : Call Debug()
    
       Stringmarker1 = InStr (1,Line,"starting",2)
@@ -144,10 +146,10 @@ EndIf
       Stringmarker4 = InStr (1,Line,"FLUSH",2)
       Stringmarker5 = InStr (1,Line,"PUMPING",2)
       Stringmarker6 = InStr (1,Line,"completed",2)
-      If Stringmarker6<>0 Then 
-         PPSSampleCount=PPSSampleCount+Stringmarker6
-       EndIf
-      If Stringmarker1<>0 OR Stringmarker2<>0 OR Stringmarker3<>0 OR Stringmarker4<>0 OR Stringmarker5<>0 Then
+      If Stringmarker6<>NAN Then 
+         PPSSampleCount=PPSSampleCount+1
+      EndIf
+      If Stringmarker1<>NAN OR Stringmarker2<>NAN OR Stringmarker3<>NAN OR Stringmarker4<>NAN OR Stringmarker5<>NAN Then
         EventString=Line
         CallTable RAS 
       EndIf
