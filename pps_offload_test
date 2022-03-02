@@ -1,0 +1,79 @@
+offload
+
+ Software version:  WTS.C
+ Compiled:          Sep 15 2020 12:25:12
+ Electronics S/N:   ML14615-03
+
+ Data start:        05/17/1971 02:13:32
+ Data stop:         05/17/1971 02:25:17
+
+______
+
+HEADER
+______
+
+
+...
+...
+...
+
+________________
+
+EVENT PARAMETERS
+________________
+
+
+                                |Flush  |Sample Time  |Fixative 
+                                |Vol    |Vol    Limit |Vol      
+
+ Event  1: 05/17/1971 02:14:37  |50     |100    3     |10       
+ Event  2: 05/17/1971 02:18:12  |50     |100    3     |10       
+ Event  3: 05/17/1971 02:22:04  |50     |100    3     |NA       
+Pump data period: 15 seconds
+Available fixative at start of deployment: 59.4
+
+_______________
+
+DEPLOYMENT DATA
+_______________
+
+Event   |                        |Start                |Internal |Battery |Volume     |        |Procedure                     
+Number  |Procedure               |Time                 |Temp.    |Voltage |Pumped     |Duration|Result                        
+        |                                        |         |        |           |                              
+       1|Water Flush             |  05/17/1971 02:14:38|     21.7|    35.4|         50|      31| Volume reached
+       1|Sample                  |  05/17/1971 02:15:21|     21.9|    35.4|        100|      8Volume reached
+       1|Fixative Flush          |  05/17/1971 02:17:16|     23.5|    34.1|         10|       8| Volume reached
+        |                        |                     |         |        |           |        |                              
+       2|Water Flush             |  05/17/1971 02:18:13|     24.4|    35.1|         50|      31| Volum
+       2M                 |  05/17/1971 02:19:01|     25.6|    35.1|        100|      81| Volume reached
+       2|Fixative Flush          |  05/17/1971 02:20:56|     27.0|    33.9|         10|       8| Volume reached
+                        |                     |         |        |           |        |                              
+       3|Water Flush             |  05/17/1971 02:22:04|     27.8|    34.9|         50|      31| Volume reached
+       3|Sample                  |  05/17/1971 02:22:58|     28.7|    35.0|        100|      81| Volume reached
+
+____________
+
+PUMPING DATA
+____________
+
+
+ Pump data period = 15 seconds
+
+  [event#]  [ml/min]    [ml]     [Vbat Cur]    [High Cur]
+
+     1      75.3       18.5      35.4          50           50
+     1      74.8       37.2      35.4                     50
+     1      74.8       56.0      35.4          50           50
+     1      75.3       74.7      35.4          50           50
+     1      74.8       93.5      35.4          50           50
+     2      75.3       18.5      35.2          55           55
+     2      75.3       37.2      35.2          54           54
+     2      74.8       56.0      35.2          53           53
+     2      74.8       74.7      35.2          54           54
+     2      74.8       93.5      35.2          54           54
+     3      75.3       18.5      35.1          52           52
+     3      74.8       37.2      35.1          51           51
+     3      74.8       56.0      35.1          51           51
+     3      75.3       74.7      35.0          51           51
+     3      74.8       93.5      35.1          51           51
+05/17/1971 02:29:57 WTS 14615-03>
