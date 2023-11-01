@@ -1311,7 +1311,7 @@ Hydrocycle_720_phosphate_min <- min(Hydrocycle_720$Phosphate_despike,na.rm = TRU
 ECO_720_FDOM_max <- max(ECO_720$FDOM_despike,na.rm = TRUE)
 ECO_720_FDOM_min <- min(ECO_720$FDOM_despike,na.rm = TRUE)
 
-Server<-list(smtpServer= "mail-relay.brown.edu",smtpPort=25 )
+Server<-list(smtpServer= "regmail.brown.edu",smtpPort=25 )
 
 qc_subject_text <- "High Resolution QC"
 qc_body_text <- sprintf ("12 Hour QC Ranges
