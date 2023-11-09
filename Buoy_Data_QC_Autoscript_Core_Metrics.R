@@ -1650,5 +1650,5 @@ qc_body_text <- sprintf ("Automated QC report for CAIM Buoys 720 and 620
 
 bodyWithAttachment <- list(qc_body_text,mime_part(x=file_path_720,name=file_name_720),mime_part(x=file_path_620,name=file_name_620))
 sendmailV <- Vectorize( sendmail , vectorize.args = "to" )
-emails <- c( "kristofer_gomes@uri.edu","davies@uri.edu", "robert_zamoida@uri.edu","ruby_dener@uri.edu","masonjacob@uri.edu", "reporting-ricaim@brown.edu" ) 
+emails <- c( "kristofer_gomes@uri.edu","davies@uri.edu", "robert_zamoida@uri.edu","ruby_dener@uri.edu","masonjacob@uri.edu","reporting-ricaim@brown.edu" ) 
 sendmailV("noreply@brown.edu",emails,qc_subject_text,bodyWithAttachment,control=Server)
