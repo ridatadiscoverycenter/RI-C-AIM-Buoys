@@ -1380,5 +1380,5 @@ qc_body_text <- sprintf ("12 Hour QC Ranges
 
 bodyWithAttachment <- list(qc_body_text)
 sendmailV <- Vectorize( sendmail , vectorize.args = "to" )
-emails <- c( "kristofer_gomes@uri.edu") #, 
+emails <- c( "kristofer_gomes@uri.edu","reporting-ricaim@brown.edu" ) #, 
 sendmailV("noreply@brown.edu",emails,qc_subject_text,bodyWithAttachment,control=Server)
