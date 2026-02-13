@@ -1,3 +1,7 @@
+# ![Static Badge](https://img.shields.io/badge/ARCHIVED-red)
+<br>
+## **Archived February 2026 as real-time buoys went offline in Nov. 2024 with no plans to continue**
+
 
 R scripts used for the processing and QC of data from buoy platforms in Narragansett Bay as part of RI-CAIM. 
 
