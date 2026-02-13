@@ -1,5 +1,4 @@
 # ![Static Badge](https://img.shields.io/badge/ARCHIVED-red)
-<br>
 ## **Archived February 2026 as real-time buoys went offline in Nov. 2024 with no plans to continue**
 
 
